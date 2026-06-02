@@ -55,6 +55,9 @@ services:
       PORT: 8080
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/graduation_project_db?schema=public
       CORS_ORIGIN: http://localhost:3000,http://localhost
+      JWT_SECRET: change-me-in-production
+      JWT_EXPIRES_IN: 1d
+      BCRYPT_SALT_ROUNDS: 10
     ports:
       - "8080:8080"
     depends_on:

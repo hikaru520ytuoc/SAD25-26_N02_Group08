@@ -9,7 +9,7 @@ import { getBackendHealth, type HealthResponse } from '@/lib/api';
 type HealthState = 'checking' | 'connected' | 'disconnected';
 
 const upcomingModules = [
-  'Auth, User & Role',
+  'Auth, User & Role đã triển khai',
   'Đợt đồ án và sinh viên đủ điều kiện',
   'Đề tài và đăng ký đề tài',
   'Đề cương và tiến độ',
@@ -55,7 +55,7 @@ export default function HomePage() {
             <div className="max-w-2xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 ring-1 ring-blue-100">
                 <GraduationCap className="h-4 w-4" />
-                Sprint 0 · Technical Foundation
+                Sprint 1 · Auth, User & Role
               </div>
 
               <h1 className="text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
@@ -63,8 +63,7 @@ export default function HomePage() {
               </h1>
 
               <p className="mt-5 text-lg leading-8 text-slate-600">
-                Nền tảng frontend Next.js đã chạy. Các module nghiệp vụ như đăng ký đề tài,
-                nộp đề cương, bảo vệ, chấm điểm và lưu trữ sẽ được triển khai ở các sprint sau.
+                Nền tảng xác thực, người dùng và phân quyền đã được bổ sung. Các nghiệp vụ đồ án như đăng ký đề tài, đề cương, bảo vệ và lưu trữ sẽ triển khai ở sprint sau.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -72,7 +71,7 @@ export default function HomePage() {
                   href="/login"
                   className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
                 >
-                  Đi tới Login placeholder
+                  Đăng nhập hệ thống
                 </a>
                 <a
                   href={`${process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080'}/api/docs`}
