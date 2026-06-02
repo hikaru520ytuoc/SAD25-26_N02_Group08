@@ -257,3 +257,72 @@ docker compose down -v
 - Không dùng mật khẩu demo trong production.
 - Không public MinIO bucket trong môi trường production.
 - Sprint 1 lưu token ở localStorage để phục vụ demo môn học; production nên cân nhắc httpOnly cookie.
+
+---
+
+## Sprint 1 Hotfix: backend restart, Prisma drift and seed error
+
+If the backend container is restarting, or Prisma reports migration drift, or seed fails with `Unknown file extension ".ts"`, run the clean development reset below.
+
+> This removes local Docker volumes. Use only for development/demo.
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+Check backend:
+
+```bash
+curl http://localhost:8080/api/health
+```
+
+Check logs if needed:
+
+```bash
+docker logs gpm_backend --tail=200
+```
+
+---
+
+## Hotfix v2: backend Restarting vì `/app/dist/main.js`
+
+Nếu backend container bị restart và log có lỗi:
+
+```text
+Error: Cannot find module '/app/dist/main.js'
+```
+
+bản này đã sửa `backend/Dockerfile` để hỗ trợ cả `dist/main.js` và `dist/src/main.js`.
+
+Chạy lại từ đầu:
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+Kiểm tra:
+
+```bash
+docker compose ps
+curl http://localhost:8080/api/health
+```
