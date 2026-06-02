@@ -1,6 +1,6 @@
 'use client';
 
-import { LogOut, Shield, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, CheckSquare, FileText, LogOut, Shield, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -43,6 +43,9 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const isAdmin = user.roles.includes('ADMIN');
+  const isFaculty = user.roles.includes('FACULTY_MANAGER') || isAdmin;
+  const isSupervisor = user.roles.includes('SUPERVISOR');
+  const isStudent = user.roles.includes('STUDENT') || isAdmin || user.roles.includes('FACULTY_MANAGER');
 
   return (
     <AppShell>
@@ -75,10 +78,50 @@ export default function DashboardPage() {
             </Link>
           )}
 
+          {isFaculty && (
+            <Link href="/faculty/project-periods" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CalendarDays className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Quản lý đợt đồ án</h2>
+              <p className="mt-2 text-slate-600">Tạo, mở và đóng đợt đồ án tốt nghiệp.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/student-eligibilities" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CheckSquare className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Sinh viên đủ điều kiện</h2>
+              <p className="mt-2 text-slate-600">Lập danh sách sinh viên đủ điều kiện theo đợt.</p>
+            </Link>
+          )}
+
+          {isSupervisor && (
+            <Link href="/supervisor/topics" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Đề tài của tôi</h2>
+              <p className="mt-2 text-slate-600">Tạo đề tài và gửi Khoa xét duyệt.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/topics" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <BookOpen className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Duyệt đề tài</h2>
+              <p className="mt-2 text-slate-600">Duyệt, từ chối và công bố đề tài.</p>
+            </Link>
+          )}
+
+          {isStudent && (
+            <Link href="/topics" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <BookOpen className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Danh sách đề tài công bố</h2>
+              <p className="mt-2 text-slate-600">Xem đề tài đã được duyệt và công bố.</p>
+            </Link>
+          )}
+
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
-            <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ đồ án</h2>
-            <p className="mt-2 text-slate-600">Các chức năng đề tài, đề cương, bảo vệ và lưu trữ sẽ được triển khai ở sprint sau.</p>
+            <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
+            <p className="mt-2 text-slate-600">Đăng ký đề tài, đề cương, bảo vệ và lưu trữ sẽ được triển khai ở sprint sau.</p>
           </div>
         </div>
       </div>

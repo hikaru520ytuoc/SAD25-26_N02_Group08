@@ -5,6 +5,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { HealthModule } from './modules/health/health.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { UsersModule } from './modules/users/users.module';
+import { ProjectPeriodsModule } from './modules/project-periods/project-periods.module';
+import { StudentEligibilitiesModule } from './modules/student-eligibilities/student-eligibilities.module';
+import { TopicsModule } from './modules/topics/topics.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -19,6 +22,9 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     UsersModule,
     RolesModule,
+    ProjectPeriodsModule,
+    StudentEligibilitiesModule,
+    TopicsModule,
   ],
 })
 export class AppModule {}

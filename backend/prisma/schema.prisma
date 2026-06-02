@@ -17,6 +17,41 @@ enum AuditResult {
   FAILED
 }
 
+enum InternshipStatus {
+  NOT_COMPLETED
+  COMPLETED
+  WAIVED
+}
+
+enum AcademicStatus {
+  ACTIVE
+  SUSPENDED
+  GRADUATED
+  DROPPED
+}
+
+enum ProjectPeriodStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum EligibilityStatus {
+  PENDING
+  ELIGIBLE
+  NOT_ELIGIBLE
+}
+
+enum TopicStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  PUBLISHED
+  CLOSED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -30,6 +65,12 @@ model User {
 
   userRoles UserRole[]
   auditLogs AuditLog[] @relation("AuditActor")
+  student   Student?
+  lecturer  Lecturer?
+
+  createdProjectPeriods ProjectPeriod[] @relation("ProjectPeriodCreator")
+  checkedEligibilities   StudentEligibility[] @relation("EligibilityChecker")
+  approvedTopics         Topic[] @relation("TopicApprover")
 
   @@map("users")
 }
@@ -76,4 +117,121 @@ model AuditLog {
   actor User? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@map("audit_logs")
+}
+
+model Faculty {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  students  Student[]
+  lecturers Lecturer[]
+
+  @@map("faculties")
+}
+
+model Student {
+  id               String           @id @default(uuid())
+  userId           String           @unique
+  studentCode      String           @unique
+  className        String
+  major            String
+  facultyId        String?
+  internshipStatus InternshipStatus @default(NOT_COMPLETED)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty       Faculty?             @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  eligibilities StudentEligibility[]
+
+  @@map("students")
+}
+
+model Lecturer {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  lecturerCode          String   @unique
+  academicRank          String?
+  department            String?
+  facultyId             String?
+  maxSupervisedStudents Int?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty Faculty? @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  topics  Topic[]
+
+  @@map("lecturers")
+}
+
+model ProjectPeriod {
+  id                    String              @id @default(uuid())
+  name                  String
+  academicYear          String
+  semester              String
+  startDate             DateTime
+  endDate               DateTime
+  registrationStartDate DateTime?
+  registrationEndDate   DateTime?
+  status                ProjectPeriodStatus @default(DRAFT)
+  createdById           String
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  createdBy     User                 @relation("ProjectPeriodCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  eligibilities StudentEligibility[]
+  topics        Topic[]
+
+  @@map("project_periods")
+}
+
+model StudentEligibility {
+  id                String            @id @default(uuid())
+  studentId         String
+  projectPeriodId   String
+  internshipStatus  InternshipStatus
+  academicStatus    AcademicStatus    @default(ACTIVE)
+  eligibilityStatus EligibilityStatus @default(PENDING)
+  reason            String?
+  checkedById       String
+  checkedAt         DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod ProjectPeriod @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  checkedBy     User          @relation("EligibilityChecker", fields: [checkedById], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, projectPeriodId])
+  @@map("student_eligibilities")
+}
+
+model Topic {
+  id             String      @id @default(uuid())
+  title          String
+  description    String
+  objectives     String?
+  expectedOutput String?
+  major          String?
+  maxStudents    Int         @default(1)
+  supervisorId   String
+  projectPeriodId String
+  status         TopicStatus @default(DRAFT)
+  rejectionReason String?
+  approvedById   String?
+  approvedAt     DateTime?
+  publishedAt    DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  supervisor    Lecturer      @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  projectPeriod ProjectPeriod @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  approvedBy    User?         @relation("TopicApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@map("topics")
 }

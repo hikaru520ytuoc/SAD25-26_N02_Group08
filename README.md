@@ -326,3 +326,92 @@ Kiểm tra:
 docker compose ps
 curl http://localhost:8080/api/health
 ```
+
+---
+
+# Sprint 2 - Project Period, Student Eligibility and Topic Foundation
+
+## Implemented scope
+
+Sprint 2 implements the first business foundation of the graduation project management system:
+
+- Project Period Module
+- Student Eligibility Module
+- Topic Module
+- Faculty project period management UI
+- Faculty student eligibility UI
+- Supervisor topic management UI
+- Faculty topic approval/publish UI
+- Student published topic list UI
+
+Sprint 2 does not implement topic registration, supervisor assignment, outline submission, defense, reviewer, council, scoring or archive workflows.
+
+## Run Sprint 2 with Docker Compose
+
+For a clean development/demo database:
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+Verify:
+
+```bash
+docker compose ps
+curl http://localhost:8080/api/health
+```
+
+## Demo accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | admin@example.com | Admin@123456 |
+| Student | student@example.com | Student@123456 |
+| Supervisor | supervisor@example.com | Supervisor@123456 |
+| Faculty Manager | faculty@example.com | Faculty@123456 |
+
+## Sprint 2 demo URLs
+
+| Page | URL |
+|---|---|
+| Faculty Project Periods | http://localhost:3000/faculty/project-periods |
+| Faculty Student Eligibilities | http://localhost:3000/faculty/student-eligibilities |
+| Faculty Topic Approval | http://localhost:3000/faculty/topics |
+| Supervisor Topics | http://localhost:3000/supervisor/topics |
+| Student Published Topics | http://localhost:3000/topics |
+
+## Sprint 2 API groups
+
+| Module | Endpoints |
+|---|---|
+| Project Periods | `/api/project-periods` |
+| Student Eligibilities | `/api/student-eligibilities` |
+| Topics | `/api/topics`, `/api/topics/my`, `/api/topics/published` |
+
+## Demo flow
+
+1. Login as Faculty Manager.
+2. Open `/faculty/project-periods`, create/open a project period.
+3. Open `/faculty/student-eligibilities`, view demo eligible student or add one by UUID.
+4. Login as Supervisor.
+5. Open `/supervisor/topics`, create a topic and submit it.
+6. Login as Faculty Manager.
+7. Open `/faculty/topics`, approve and publish the topic.
+8. Login as Student.
+9. Open `/topics`, confirm only published topics are visible.
+
+## Sprint 2 commit
+
+```text
+feat(sprint-2): implement project period, eligibility and topic foundation
+```
