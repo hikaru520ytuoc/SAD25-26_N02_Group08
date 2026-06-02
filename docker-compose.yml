@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gpm_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: graduation_project_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d graduation_project_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - gpm_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: gpm_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - gpm_network
+
+  minio:
+    image: minio/minio:latest
+    container_name: gpm_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - gpm_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gpm_backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      PORT: 8080
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/graduation_project_db?schema=public
+      CORS_ORIGIN: http://localhost:3000,http://localhost
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - gpm_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gpm_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+      NEXT_PUBLIC_APP_NAME: Graduation Project Management
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - gpm_network
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: gpm_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - gpm_network
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  gpm_network:
+    driver: bridge
