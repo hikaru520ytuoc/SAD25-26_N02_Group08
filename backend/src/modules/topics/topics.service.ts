@@ -100,7 +100,8 @@ export class TopicsService {
     const topic = await this.findOne(id);
     await this.ensureTopicOwner(topic.supervisor.userId, actor);
 
-    if (![TopicStatus.DRAFT, TopicStatus.SUBMITTED, TopicStatus.REJECTED].includes(topic.status)) {
+    const editableStatuses: TopicStatus[] = [TopicStatus.DRAFT, TopicStatus.SUBMITTED, TopicStatus.REJECTED];
+    if (!editableStatuses.includes(topic.status)) {
       throw new AppException('TOPIC_INVALID_STATUS', 'Chỉ được sửa đề tài khi còn nháp, chờ duyệt hoặc bị từ chối', HttpStatus.CONFLICT);
     }
 
@@ -139,7 +140,8 @@ export class TopicsService {
     const topic = await this.findOne(id);
     await this.ensureTopicOwner(topic.supervisor.userId, actor);
 
-    if (![TopicStatus.DRAFT, TopicStatus.REJECTED].includes(topic.status)) {
+    const submittableStatuses: TopicStatus[] = [TopicStatus.DRAFT, TopicStatus.REJECTED];
+    if (!submittableStatuses.includes(topic.status)) {
       throw new AppException('TOPIC_INVALID_STATUS', 'Chỉ được gửi duyệt đề tài ở trạng thái nháp hoặc bị từ chối', HttpStatus.CONFLICT);
     }
 
@@ -192,7 +194,8 @@ export class TopicsService {
 
   async reject(id: string, dto: RejectTopicDto, actor: AuthUser) {
     const topic = await this.findOne(id);
-    if (![TopicStatus.SUBMITTED, TopicStatus.APPROVED].includes(topic.status)) {
+    const rejectableStatuses: TopicStatus[] = [TopicStatus.SUBMITTED, TopicStatus.APPROVED];
+    if (!rejectableStatuses.includes(topic.status)) {
       throw new AppException('TOPIC_INVALID_STATUS', 'Chỉ được từ chối đề tài đã gửi duyệt hoặc đã duyệt', HttpStatus.CONFLICT);
     }
 

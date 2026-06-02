@@ -33,3 +33,27 @@ git commit -m "feat(sprint-2): implement project period, eligibility and topic f
 - Add frontend supervisor topic management page and student published topic list page
 - Update dashboard links, README, run commands and Sprint 2 test cases"
 ```
+
+## Hotfix Commit Notes
+
+```text
+fix(sprint-2): fix TopicStatus enum build error in topic workflow
+
+- Fix TypeScript TS2345 errors in topics service status validation
+- Explicitly type topic workflow status arrays as TopicStatus[]
+- Keep topic update, submit and reject business rules unchanged
+- Add troubleshooting notes for Sprint 2 backend Docker build failure
+- Update run guide for clean rebuild, migration deploy and seed workflow
+```
+
+## Hotfix Sprint 2 Runtime
+
+```text
+fix(sprint-2): fix JwtService provider resolution for Sprint 2 modules
+
+- Import JwtModule in Project Period, Student Eligibility and Topic modules
+- Fix backend restart caused by JwtAuthGuard dependency resolution at startup
+- Keep Sprint 2 RBAC and ownership rules unchanged
+- Add runtime troubleshooting notes for backend Restarting state
+- Update run guide after Sprint 2 runtime hotfix
+```

@@ -415,3 +415,28 @@ curl http://localhost:8080/api/health
 ```text
 feat(sprint-2): implement project period, eligibility and topic foundation
 ```
+
+## Sprint 2 Runtime Hotfix Note
+
+If backend build and Prisma seed succeed but `gpm_backend` is still `Restarting (1)`, use:
+
+```bash
+docker logs gpm_backend --tail=200
+```
+
+This release fixes the Sprint 2 runtime issue by importing `JwtModule` in:
+
+- ProjectPeriodsModule
+- StudentEligibilitiesModule
+- TopicsModule
+
+Then rebuild cleanly:
+
+```bash
+docker compose down -v
+docker compose build --no-cache backend frontend
+docker compose up -d postgres redis minio
+docker compose run --rm backend npx prisma migrate deploy
+docker compose run --rm backend npm run prisma:seed
+docker compose up -d --build
+```

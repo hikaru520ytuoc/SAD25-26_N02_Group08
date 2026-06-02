@@ -53,3 +53,23 @@ curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"admin@example.com","password":"Admin@123456"}'
 ```
+
+## Sprint 2 TypeScript Build Hotfix Commands
+
+Use these commands when backend build fails with `TS2345` in `topics.service.ts`.
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+
+curl http://localhost:8080/api/health
+```
