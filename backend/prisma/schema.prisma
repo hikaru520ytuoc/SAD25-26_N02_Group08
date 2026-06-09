@@ -219,8 +219,6 @@ model Student {
   supervisorAssignments SupervisorAssignment[]
   outlines              Outline[]
   projectProgresses     ProjectProgress[]
-  outlines              Outline[]
-  projectProgresses     ProjectProgress[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -320,9 +318,6 @@ model Topic {
   approvedBy            User?                  @relation("TopicApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   topicRegistrations    TopicRegistration[]
   supervisorAssignments SupervisorAssignment[]
-  outlines              Outline[]
-  projectProgresses     ProjectProgress[]
-
   @@map("topics")
 }
 
