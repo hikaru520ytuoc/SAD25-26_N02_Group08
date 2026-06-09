@@ -1,15 +1,14 @@
-feat(sprint-5): implement defense registration and reviewer evaluation workflow
+feat(sprint-6): implement defense council scheduling and document review workflow
 
-- Add Prisma schema and migration for defense registrations, reviewer assignments, reviewer evaluations, supervisor scores and reviewer scores
-- Extend file document type for defense documents and support report/slide upload through MinIO
-- Add Defense Registration module for student submission, resubmission and supervisor approval/revision workflow
-- Add supervisor defense approval flow with supervisor score validation from 0 to 10
-- Add Reviewer module for faculty reviewer assignment and reviewer evaluation workflow
-- Add reviewer score validation and defense readiness status updates
-- Add notification and audit log events for defense registration, supervisor review and reviewer evaluation
-- Add Sprint 5 seed data for reviewer demo, approved outline, defense registration and reviewer assignment
-- Add frontend student defense registration page
-- Add frontend supervisor defense review page
-- Add frontend faculty reviewer assignment page
-- Add frontend reviewer evaluation page
-- Update environment examples, README, run guide and Sprint 5 test cases
+- Add Prisma schema and migration for defense councils, council members, defense schedules and defense documents
+- Extend file document types for final defense reports, slides and supplements
+- Add Council module with council creation, update and member management APIs
+- Add Defense Schedule module for assigning ready defense registrations to active councils
+- Add Defense Document module for student submission, resubmission and secretary review workflow
+- Add RBAC and ownership checks for faculty, students, council members and council secretaries
+- Add notifications and audit logs for council, schedule and defense document actions
+- Add seed data for council chair, secretary, active council and demo defense schedule
+- Add frontend faculty council and defense schedule management pages
+- Add frontend student defense schedule and document submission page
+- Add frontend council schedule and secretary document review pages
+- Update dashboard links, README, run guide and Sprint 6 test cases

@@ -1,6 +1,6 @@
-# Install and Run Commands - Sprint 5
+# Sprint 6 install and run commands
 
-## Chạy bằng Docker Compose
+## Docker clean run
 
 ```bash
 docker compose down -v
@@ -16,33 +16,19 @@ docker compose run --rm backend npm run prisma:seed
 docker compose up -d --build
 ```
 
-## Kiểm tra
+## Check
 
 ```bash
 docker compose ps
 curl http://localhost:8080/api/health
 ```
 
-## Nếu backend lỗi
-
-```bash
-docker logs gpm_backend --tail=200
-```
-
-## URLs
-
-- Frontend: http://localhost:3000
-- Swagger: http://localhost:8080/api/docs
-- MinIO Console: http://localhost:9001
-- Student Defense Registration: http://localhost:3000/student/defense-registration
-- Supervisor Defense Review: http://localhost:3000/supervisor/defense-registrations
-- Faculty Reviewer Assignment: http://localhost:3000/faculty/reviewer-assignments
-- Reviewer Assignments: http://localhost:3000/reviewer/assignments
-
 ## Demo accounts
 
-- student@example.com / Student@123456
-- supervisor@example.com / Supervisor@123456
-- faculty@example.com / Faculty@123456
-- reviewer@example.com / Reviewer@123456
-- admin@example.com / Admin@123456
+```text
+faculty@example.com / Faculty@123456
+student@example.com / Student@123456
+council@example.com / Council@123456
+secretary@example.com / Secretary@123456
+reviewer@example.com / Reviewer@123456
+```

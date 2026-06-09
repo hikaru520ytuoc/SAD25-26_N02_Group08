@@ -276,3 +276,59 @@ docker compose up -d --build
 3. Login faculty, vào `/faculty/reviewer-assignments`, phân công GVPB cho hồ sơ đã được GVHD approve.
 4. Login reviewer, vào `/reviewer/assignments`, xem hồ sơ, nhập nhận xét và điểm phản biện.
 5. Kiểm tra notification và audit log.
+
+---
+
+# Sprint 6 - Defense Council, Schedule and Document Review
+
+Sprint 6 triển khai chuẩn bị bảo vệ chính thức: hội đồng, lịch bảo vệ và kiểm tra hồ sơ bảo vệ.
+
+## New modules
+
+- Council Module
+- Defense Schedule Module
+- Defense Document Module
+
+## New frontend routes
+
+- `http://localhost:3000/faculty/councils`
+- `http://localhost:3000/faculty/defense-schedules`
+- `http://localhost:3000/student/defense-schedule`
+- `http://localhost:3000/council/schedules`
+- `http://localhost:3000/secretary/defense-documents`
+
+## Demo flow
+
+1. Login `faculty@example.com`.
+2. Vào `/faculty/councils` để tạo hội đồng và thêm thành viên.
+3. Vào `/faculty/defense-schedules` để xếp lịch cho hồ sơ READY_FOR_COUNCIL.
+4. Login `student@example.com` để xem lịch tại `/student/defense-schedule`.
+5. Student upload file qua `/api/files/upload`, sau đó dán file ID để nộp hồ sơ bảo vệ.
+6. Login `secretary@example.com` vào `/secretary/defense-documents` để yêu cầu bổ sung hoặc xác nhận hồ sơ hợp lệ.
+7. Login `council@example.com` vào `/council/schedules` để xem lịch hội đồng.
+
+## Run
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+## Accounts
+
+```text
+Faculty Manager: faculty@example.com / Faculty@123456
+Student: student@example.com / Student@123456
+Council Chair: council@example.com / Council@123456
+Council Secretary: secretary@example.com / Secretary@123456
+Admin: admin@example.com / Admin@123456
+```

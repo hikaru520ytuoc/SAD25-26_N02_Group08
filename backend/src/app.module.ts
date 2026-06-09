@@ -17,6 +17,9 @@ import { ProjectProgressModule } from './modules/project-progress/project-progre
 import { DefenseRegistrationsModule } from './modules/defense-registrations/defense-registrations.module';
 import { ReviewersModule } from './modules/reviewers/reviewers.module';
 import { ScoresModule } from './modules/scores/scores.module';
+import { CouncilsModule } from './modules/councils/councils.module';
+import { DefenseSchedulesModule } from './modules/defense-schedules/defense-schedules.module';
+import { DefenseDocumentsModule } from './modules/defense-documents/defense-documents.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -43,6 +46,9 @@ import { PrismaModule } from './prisma/prisma.module';
     DefenseRegistrationsModule,
     ReviewersModule,
     ScoresModule,
+    CouncilsModule,
+    DefenseSchedulesModule,
+    DefenseDocumentsModule,
   ],
 })
 export class AppModule {}

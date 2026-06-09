@@ -109,6 +109,10 @@ enum FileDocumentType {
   REPORT
   SLIDE
   DEFENSE_DOCUMENT
+  DEFENSE_REPORT_FINAL
+  DEFENSE_SLIDE_FINAL
+  DEFENSE_SUPPLEMENT
+  DEFENSE_OTHER_DOCUMENT
   REVISION
   ARCHIVE
   OTHER
@@ -134,6 +138,34 @@ enum ReviewerAssignmentStatus {
 enum ReviewerEligibilityStatus {
   ELIGIBLE_FOR_DEFENSE
   NOT_ELIGIBLE_FOR_DEFENSE
+}
+
+enum DefenseCouncilStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+  CANCELLED
+}
+
+enum CouncilRole {
+  CHAIR
+  SECRETARY
+  MEMBER
+}
+
+enum DefenseScheduleStatus {
+  SCHEDULED
+  DOCUMENT_PENDING
+  DOCUMENT_NEEDS_SUPPLEMENT
+  DOCUMENT_APPROVED
+  CANCELLED
+  COMPLETED
+}
+
+enum DefenseDocumentStatus {
+  SUBMITTED
+  NEEDS_SUPPLEMENT
+  APPROVED
 }
 
 model User {
@@ -164,6 +196,10 @@ model User {
   ownedFileDocuments     FileDocument[] @relation("FileOwner")
   uploadedFileDocuments  FileDocument[] @relation("FileUploader")
   notifications          Notification[]
+  createdDefenseCouncils DefenseCouncil[] @relation("DefenseCouncilCreator")
+  createdDefenseSchedules DefenseSchedule[] @relation("DefenseScheduleCreator")
+  councilMemberships     CouncilMember[]
+  reviewedDefenseDocuments DefenseDocument[] @relation("DefenseDocumentSecretary")
 
   @@map("users")
 }
@@ -222,6 +258,7 @@ model Faculty {
 
   students  Student[]
   lecturers Lecturer[]
+  defenseCouncils DefenseCouncil[]
 
   @@map("faculties")
 }
@@ -246,6 +283,8 @@ model Student {
   projectProgresses     ProjectProgress[]
   defenseRegistrations DefenseRegistration[]
   reviewerAssignments  ReviewerAssignment[]
+  defenseSchedules     DefenseSchedule[]
+  defenseDocuments     DefenseDocument[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -275,6 +314,7 @@ model Lecturer {
   reviewerEvaluations ReviewerEvaluation[]
   supervisorScores SupervisorScore[]
   reviewerScores ReviewerScore[]
+  councilMemberships CouncilMember[]
 
   @@map("lecturers")
 }
@@ -302,6 +342,8 @@ model ProjectPeriod {
   projectProgresses     ProjectProgress[]
   defenseRegistrations  DefenseRegistration[]
   reviewerAssignments   ReviewerAssignment[]
+  defenseCouncils       DefenseCouncil[]
+  defenseSchedules      DefenseSchedule[]
 
   @@map("project_periods")
 }
@@ -546,6 +588,9 @@ model FileDocument {
   defenseReportRegistrations DefenseRegistration[] @relation("DefenseReportFile")
   defenseSlideRegistrations DefenseRegistration[] @relation("DefenseSlideFile")
   defenseAdditionalDocumentRegistrations DefenseRegistration[] @relation("DefenseAdditionalDocumentFile")
+  defenseDocumentReports DefenseDocument[] @relation("DefenseDocumentReportFile")
+  defenseDocumentSlides DefenseDocument[] @relation("DefenseDocumentSlideFile")
+  defenseDocumentAdditional DefenseDocument[] @relation("DefenseDocumentAdditionalFile")
 
   @@index([ownerId])
   @@index([relatedType, relatedId])
@@ -588,6 +633,8 @@ model DefenseRegistration {
   reviewerAssignment       ReviewerAssignment?
   reviewerEvaluations      ReviewerEvaluation[]
   supervisorScore          SupervisorScore?
+  defenseSchedule          DefenseSchedule?
+  defenseDocument          DefenseDocument?
 
   @@unique([studentId, projectPeriodId])
   @@index([supervisorId])
@@ -675,6 +722,105 @@ model ReviewerScore {
 
   @@index([reviewerId])
   @@map("reviewer_scores")
+}
+
+model DefenseCouncil {
+  id              String               @id @default(uuid())
+  name            String
+  projectPeriodId String
+  facultyId       String?
+  description     String?
+  status          DefenseCouncilStatus @default(DRAFT)
+  createdById     String
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  projectPeriod ProjectPeriod    @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  faculty       Faculty?         @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  createdBy     User             @relation("DefenseCouncilCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  members       CouncilMember[]
+  schedules     DefenseSchedule[]
+
+  @@index([projectPeriodId])
+  @@index([status])
+  @@map("defense_councils")
+}
+
+model CouncilMember {
+  id            String      @id @default(uuid())
+  councilId     String
+  lecturerId    String
+  userId        String
+  roleInCouncil CouncilRole
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  council  DefenseCouncil @relation(fields: [councilId], references: [id], onDelete: Cascade)
+  lecturer Lecturer       @relation(fields: [lecturerId], references: [id], onDelete: Restrict)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([councilId, lecturerId])
+  @@index([userId])
+  @@index([roleInCouncil])
+  @@map("council_members")
+}
+
+model DefenseSchedule {
+  id                    String                @id @default(uuid())
+  defenseRegistrationId String                @unique
+  studentId             String
+  projectPeriodId       String
+  councilId             String
+  room                  String
+  defenseDate           DateTime
+  startTime             DateTime
+  endTime               DateTime
+  status                DefenseScheduleStatus @default(SCHEDULED)
+  createdById           String
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  council             DefenseCouncil      @relation(fields: [councilId], references: [id], onDelete: Restrict)
+  createdBy           User                @relation("DefenseScheduleCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  defenseDocument     DefenseDocument?
+
+  @@index([studentId])
+  @@index([councilId])
+  @@index([projectPeriodId])
+  @@index([status])
+  @@map("defense_schedules")
+}
+
+model DefenseDocument {
+  id                    String                @id @default(uuid())
+  defenseScheduleId     String                @unique
+  defenseRegistrationId String                @unique
+  studentId             String
+  reportFileId          String?
+  slideFileId           String?
+  additionalFileId      String?
+  status                DefenseDocumentStatus @default(SUBMITTED)
+  secretaryId           String?
+  secretaryNote         String?
+  reviewedAt            DateTime?
+  submittedAt           DateTime              @default(now())
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  defenseSchedule     DefenseSchedule      @relation(fields: [defenseScheduleId], references: [id], onDelete: Cascade)
+  defenseRegistration DefenseRegistration  @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  student             Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reportFile          FileDocument?        @relation("DefenseDocumentReportFile", fields: [reportFileId], references: [id], onDelete: SetNull)
+  slideFile           FileDocument?        @relation("DefenseDocumentSlideFile", fields: [slideFileId], references: [id], onDelete: SetNull)
+  additionalFile      FileDocument?        @relation("DefenseDocumentAdditionalFile", fields: [additionalFileId], references: [id], onDelete: SetNull)
+  secretary           User?                @relation("DefenseDocumentSecretary", fields: [secretaryId], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([status])
+  @@map("defense_documents")
 }
 
 model Notification {

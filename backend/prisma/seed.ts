@@ -1,6 +1,9 @@
 import {
   AcademicStatus,
+  CouncilRole,
+  DefenseCouncilStatus,
   DefenseRegistrationStatus,
+  DefenseScheduleStatus,
   EligibilityStatus,
   InternshipStatus,
   OutlineStatus,
@@ -39,6 +42,8 @@ const demoUsers = [
   { email: 'faculty@example.com', password: 'Faculty@123456', fullName: 'Demo Faculty Manager', roleCode: 'FACULTY_MANAGER' },
   { email: 'supervisor2@example.com', password: 'Supervisor2@123456', fullName: 'Demo Supervisor 2', roleCode: 'SUPERVISOR' },
   { email: 'reviewer@example.com', password: 'Reviewer@123456', fullName: 'Demo Reviewer', roleCode: 'REVIEWER' },
+  { email: 'council@example.com', password: 'Council@123456', fullName: 'Demo Council Chair', roleCode: 'COUNCIL_MEMBER' },
+  { email: 'secretary@example.com', password: 'Secretary@123456', fullName: 'Demo Council Secretary', roleCode: 'COUNCIL_SECRETARY' },
 ];
 
 async function ensureDemoUser(email: string, password: string, fullName: string, roleCode: string) {
@@ -159,6 +164,44 @@ async function main() {
       department: 'Software Engineering',
       facultyId: faculty.id,
       maxSupervisedStudents: 8,
+    },
+  });
+
+  const councilChair = await prisma.lecturer.upsert({
+    where: { lecturerCode: 'HD001' },
+    update: {
+      userId: users.COUNCIL_MEMBER.id,
+      academicRank: 'DOCTOR',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 6,
+    },
+    create: {
+      userId: users.COUNCIL_MEMBER.id,
+      lecturerCode: 'HD001',
+      academicRank: 'DOCTOR',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 6,
+    },
+  });
+
+  const councilSecretary = await prisma.lecturer.upsert({
+    where: { lecturerCode: 'TK001' },
+    update: {
+      userId: users.COUNCIL_SECRETARY.id,
+      academicRank: 'MASTER',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 6,
+    },
+    create: {
+      userId: users.COUNCIL_SECRETARY.id,
+      lecturerCode: 'TK001',
+      academicRank: 'MASTER',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 6,
     },
   });
 
@@ -499,16 +542,87 @@ async function main() {
     create: { reviewerAssignmentId: reviewerAssignment.id, reviewerId: reviewer.id, score: 8.0, comment: 'Điểm phản biện demo Sprint 5' },
   });
 
-  await prisma.defenseRegistration.update({
+  const readyDefenseRegistration = await prisma.defenseRegistration.update({
     where: { id: defenseRegistration.id },
     data: { status: DefenseRegistrationStatus.READY_FOR_COUNCIL },
+  });
+
+  let council = await prisma.defenseCouncil.findFirst({
+    where: { name: 'Hội đồng bảo vệ đồ án tốt nghiệp số 01', projectPeriodId: period.id },
+  });
+  if (council) {
+    council = await prisma.defenseCouncil.update({
+      where: { id: council.id },
+      data: {
+        facultyId: faculty.id,
+        description: 'Hội đồng demo phục vụ kiểm thử Sprint 6',
+        status: DefenseCouncilStatus.ACTIVE,
+        createdById: users.FACULTY_MANAGER.id,
+      },
+    });
+  } else {
+    council = await prisma.defenseCouncil.create({
+      data: {
+        name: 'Hội đồng bảo vệ đồ án tốt nghiệp số 01',
+        projectPeriodId: period.id,
+        facultyId: faculty.id,
+        description: 'Hội đồng demo phục vụ kiểm thử Sprint 6',
+        status: DefenseCouncilStatus.ACTIVE,
+        createdById: users.FACULTY_MANAGER.id,
+      },
+    });
+  }
+
+  await prisma.councilMember.upsert({
+    where: { councilId_lecturerId: { councilId: council.id, lecturerId: councilChair.id } },
+    update: { userId: councilChair.userId, roleInCouncil: CouncilRole.CHAIR },
+    create: { councilId: council.id, lecturerId: councilChair.id, userId: councilChair.userId, roleInCouncil: CouncilRole.CHAIR },
+  });
+
+  await prisma.councilMember.upsert({
+    where: { councilId_lecturerId: { councilId: council.id, lecturerId: councilSecretary.id } },
+    update: { userId: councilSecretary.userId, roleInCouncil: CouncilRole.SECRETARY },
+    create: { councilId: council.id, lecturerId: councilSecretary.id, userId: councilSecretary.userId, roleInCouncil: CouncilRole.SECRETARY },
+  });
+
+  await prisma.councilMember.upsert({
+    where: { councilId_lecturerId: { councilId: council.id, lecturerId: reviewer.id } },
+    update: { userId: reviewer.userId, roleInCouncil: CouncilRole.MEMBER },
+    create: { councilId: council.id, lecturerId: reviewer.id, userId: reviewer.userId, roleInCouncil: CouncilRole.MEMBER },
+  });
+
+  await prisma.defenseSchedule.upsert({
+    where: { defenseRegistrationId: readyDefenseRegistration.id },
+    update: {
+      studentId: student.id,
+      projectPeriodId: period.id,
+      councilId: council.id,
+      room: 'P.501',
+      defenseDate: new Date('2026-01-20T00:00:00.000Z'),
+      startTime: new Date('2026-01-20T08:00:00.000Z'),
+      endTime: new Date('2026-01-20T08:30:00.000Z'),
+      status: DefenseScheduleStatus.DOCUMENT_PENDING,
+      createdById: users.FACULTY_MANAGER.id,
+    },
+    create: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      councilId: council.id,
+      room: 'P.501',
+      defenseDate: new Date('2026-01-20T00:00:00.000Z'),
+      startTime: new Date('2026-01-20T08:00:00.000Z'),
+      endTime: new Date('2026-01-20T08:30:00.000Z'),
+      status: DefenseScheduleStatus.DOCUMENT_PENDING,
+      createdById: users.FACULTY_MANAGER.id,
+    },
   });
 
 }
 
 main()
   .then(async () => {
-    console.log('Seed completed: roles, demo users and Sprint 5 demo data are ready.');
+    console.log('Seed completed: roles, demo users and Sprint 6 demo data are ready.');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

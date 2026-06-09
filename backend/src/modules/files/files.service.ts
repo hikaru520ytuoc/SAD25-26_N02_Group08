@@ -151,6 +151,23 @@ export class FilesService {
       if (registration && (registration.student.userId === actor.id || registration.supervisor.userId === actor.id || registration.reviewerAssignment?.reviewer.userId === actor.id)) return;
     }
 
+    if (file.relatedType === 'DEFENSE_DOCUMENT' && file.relatedId) {
+      const schedule = await this.prisma.defenseSchedule.findUnique({
+        where: { id: file.relatedId },
+        include: {
+          student: true,
+          defenseRegistration: { include: { supervisor: true, reviewerAssignment: { include: { reviewer: true } } } },
+          council: { include: { members: true } },
+        },
+      });
+      if (schedule && (
+        schedule.student.userId === actor.id ||
+        schedule.defenseRegistration.supervisor.userId === actor.id ||
+        schedule.defenseRegistration.reviewerAssignment?.reviewer.userId === actor.id ||
+        schedule.council.members.some((member) => member.userId === actor.id)
+      )) return;
+    }
+
     throw new AppException('FILE_ACCESS_DENIED', 'Bạn không có quyền truy cập file này', HttpStatus.FORBIDDEN);
   }
 

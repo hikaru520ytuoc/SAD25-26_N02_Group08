@@ -47,6 +47,8 @@ export default function DashboardPage() {
   const isSupervisor = user.roles.includes('SUPERVISOR');
   const isStudent = user.roles.includes('STUDENT') || isAdmin || user.roles.includes('FACULTY_MANAGER');
   const isReviewer = user.roles.includes('REVIEWER') || isAdmin;
+  const isCouncil = user.roles.includes('COUNCIL_MEMBER') || user.roles.includes('COUNCIL_SECRETARY') || isAdmin;
+  const isSecretary = user.roles.includes('COUNCIL_SECRETARY') || isAdmin;
 
   return (
     <AppShell>
@@ -218,6 +220,47 @@ export default function DashboardPage() {
             </Link>
           )}
 
+
+          {isFaculty && (
+            <Link href="/faculty/councils" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Users className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Quản lý hội đồng</h2>
+              <p className="mt-2 text-slate-600">Tạo hội đồng, thêm chủ tịch, thư ký và thành viên.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/defense-schedules" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CalendarDays className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Lập lịch bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Xếp lịch bảo vệ cho hồ sơ đã sẵn sàng lên hội đồng.</p>
+            </Link>
+          )}
+
+          {isStudent && (
+            <Link href="/student/defense-schedule" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CalendarDays className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Lịch bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Xem lịch bảo vệ và nộp/bổ sung hồ sơ bảo vệ.</p>
+            </Link>
+          )}
+
+          {isCouncil && (
+            <Link href="/council/schedules" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CalendarDays className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Lịch hội đồng</h2>
+              <p className="mt-2 text-slate-600">Xem lịch bảo vệ thuộc hội đồng của bạn.</p>
+            </Link>
+          )}
+
+          {isSecretary && (
+            <Link href="/secretary/defense-documents" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Kiểm tra hồ sơ bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Yêu cầu bổ sung hoặc xác nhận hồ sơ hợp lệ.</p>
+            </Link>
+          )}
+
           {isReviewer && (
             <Link href="/reviewer/assignments" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
               <BookOpen className="mb-4 h-7 w-7 text-slate-800" />
@@ -235,7 +278,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Hội đồng, lịch bảo vệ, điểm hội đồng, tính điểm tổng kết và lưu trữ sẽ được triển khai ở sprint sau.</p>
+            <p className="mt-2 text-slate-600">Hội đồng, lịch bảo vệ, nhập điểm hội đồng, tính điểm tổng kết, công bố kết quả và lưu trữ sẽ được triển khai ở Sprint 7–8.</p>
           </div>
         </div>
       </div>
