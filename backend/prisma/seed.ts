@@ -1,9 +1,13 @@
 import {
   AcademicStatus,
+  DefenseRegistrationStatus,
   EligibilityStatus,
   InternshipStatus,
+  OutlineStatus,
   PrismaClient,
   ProjectPeriodStatus,
+  ReviewerAssignmentStatus,
+  ReviewerEligibilityStatus,
   SupervisorAssignmentStatus,
   SupervisorAssignmentType,
   SupervisorResponseStatus,
@@ -34,6 +38,7 @@ const demoUsers = [
   { email: 'supervisor@example.com', password: 'Supervisor@123456', fullName: 'Demo Supervisor', roleCode: 'SUPERVISOR' },
   { email: 'faculty@example.com', password: 'Faculty@123456', fullName: 'Demo Faculty Manager', roleCode: 'FACULTY_MANAGER' },
   { email: 'supervisor2@example.com', password: 'Supervisor2@123456', fullName: 'Demo Supervisor 2', roleCode: 'SUPERVISOR' },
+  { email: 'reviewer@example.com', password: 'Reviewer@123456', fullName: 'Demo Reviewer', roleCode: 'REVIEWER' },
 ];
 
 async function ensureDemoUser(email: string, password: string, fullName: string, roleCode: string) {
@@ -130,6 +135,26 @@ async function main() {
     create: {
       userId: users.SUPERVISOR2.id,
       lecturerCode: 'GV002',
+      academicRank: 'DOCTOR',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 8,
+    },
+  });
+
+
+  const reviewer = await prisma.lecturer.upsert({
+    where: { lecturerCode: 'GVPB001' },
+    update: {
+      userId: users.REVIEWER.id,
+      academicRank: 'DOCTOR',
+      department: 'Software Engineering',
+      facultyId: faculty.id,
+      maxSupervisedStudents: 8,
+    },
+    create: {
+      userId: users.REVIEWER.id,
+      lecturerCode: 'GVPB001',
       academicRank: 'DOCTOR',
       department: 'Software Engineering',
       facultyId: faculty.id,
@@ -328,11 +353,162 @@ async function main() {
     },
   });
 
+
+  const assignment = await prisma.supervisorAssignment.findUniqueOrThrow({
+    where: { studentId_projectPeriodId: { studentId: student.id, projectPeriodId: period.id } },
+  });
+
+  const outline = await prisma.outline.upsert({
+    where: { topicRegistrationId: officialRegistration.id },
+    update: {
+      supervisorAssignmentId: assignment.id,
+      studentId: student.id,
+      supervisorId: lecturer.id,
+      projectPeriodId: period.id,
+      title: 'Đề cương hệ thống quản lý đồ án tốt nghiệp',
+      summary: 'Đề cương demo đã được GVHD duyệt để kiểm thử Sprint 5.',
+      status: OutlineStatus.APPROVED,
+      reviewedAt: new Date(),
+      reviewedById: users.SUPERVISOR.id,
+      feedback: null,
+    },
+    create: {
+      topicRegistrationId: officialRegistration.id,
+      supervisorAssignmentId: assignment.id,
+      studentId: student.id,
+      supervisorId: lecturer.id,
+      projectPeriodId: period.id,
+      title: 'Đề cương hệ thống quản lý đồ án tốt nghiệp',
+      summary: 'Đề cương demo đã được GVHD duyệt để kiểm thử Sprint 5.',
+      objectives: 'Hoàn thiện quy trình đăng ký, thực hiện và bảo vệ đồ án.',
+      methodology: 'Phân tích nghiệp vụ, thiết kế modular monolith, triển khai NestJS và Next.js.',
+      expectedOutput: 'Hệ thống web quản lý đồ án tốt nghiệp.',
+      timeline: '09/2025 - 01/2026',
+      status: OutlineStatus.APPROVED,
+      currentVersion: 1,
+      reviewedAt: new Date(),
+      reviewedById: users.SUPERVISOR.id,
+      versions: {
+        create: {
+          versionNumber: 1,
+          title: 'Đề cương hệ thống quản lý đồ án tốt nghiệp',
+          summary: 'Đề cương demo đã được GVHD duyệt để kiểm thử Sprint 5.',
+          objectives: 'Hoàn thiện quy trình đăng ký, thực hiện và bảo vệ đồ án.',
+          methodology: 'Phân tích nghiệp vụ, thiết kế modular monolith, triển khai NestJS và Next.js.',
+          expectedOutput: 'Hệ thống web quản lý đồ án tốt nghiệp.',
+          timeline: '09/2025 - 01/2026',
+          submitNote: 'Seed Sprint 5',
+        },
+      },
+    },
+  });
+
+  const existingDefenseRegistration = await prisma.defenseRegistration.findFirst({
+    where: { studentId: student.id, projectPeriodId: period.id },
+  });
+
+  const defenseRegistration = existingDefenseRegistration
+    ? await prisma.defenseRegistration.update({
+        where: { id: existingDefenseRegistration.id },
+        data: {
+          supervisorId: lecturer.id,
+          supervisorAssignmentId: assignment.id,
+          topicRegistrationId: officialRegistration.id,
+          outlineId: outline.id,
+          title: 'Hồ sơ bảo vệ demo - hệ thống quản lý đồ án tốt nghiệp',
+          summary: 'Hồ sơ demo phục vụ kiểm thử phân công phản biện Sprint 5.',
+          status: DefenseRegistrationStatus.APPROVED_BY_SUPERVISOR,
+          supervisorReviewedAt: new Date(),
+          supervisorReviewedById: users.SUPERVISOR.id,
+        },
+      })
+    : await prisma.defenseRegistration.create({
+        data: {
+          studentId: student.id,
+          supervisorId: lecturer.id,
+          supervisorAssignmentId: assignment.id,
+          topicRegistrationId: officialRegistration.id,
+          outlineId: outline.id,
+          projectPeriodId: period.id,
+          title: 'Hồ sơ bảo vệ demo - hệ thống quản lý đồ án tốt nghiệp',
+          summary: 'Hồ sơ demo phục vụ kiểm thử phân công phản biện Sprint 5.',
+          studentNote: 'Seed Sprint 5',
+          status: DefenseRegistrationStatus.APPROVED_BY_SUPERVISOR,
+          supervisorReviewedAt: new Date(),
+          supervisorReviewedById: users.SUPERVISOR.id,
+        },
+      });
+
+  await prisma.supervisorScore.upsert({
+    where: { defenseRegistrationId: defenseRegistration.id },
+    update: { supervisorId: lecturer.id, score: 8.0, comment: 'Điểm hướng dẫn demo Sprint 5' },
+    create: { defenseRegistrationId: defenseRegistration.id, supervisorId: lecturer.id, score: 8.0, comment: 'Điểm hướng dẫn demo Sprint 5' },
+  });
+
+  const existingReviewerAssignment = await prisma.reviewerAssignment.findUnique({
+    where: { defenseRegistrationId: defenseRegistration.id },
+  });
+
+  const reviewerAssignment = existingReviewerAssignment
+    ? await prisma.reviewerAssignment.update({
+        where: { id: existingReviewerAssignment.id },
+        data: {
+          reviewerId: reviewer.id,
+          supervisorId: lecturer.id,
+          studentId: student.id,
+          projectPeriodId: period.id,
+          assignedById: users.FACULTY_MANAGER.id,
+          status: ReviewerAssignmentStatus.ASSIGNED,
+        },
+      })
+    : await prisma.reviewerAssignment.create({
+        data: {
+          defenseRegistrationId: defenseRegistration.id,
+          studentId: student.id,
+          projectPeriodId: period.id,
+          supervisorId: lecturer.id,
+          reviewerId: reviewer.id,
+          assignedById: users.FACULTY_MANAGER.id,
+          status: ReviewerAssignmentStatus.ASSIGNED,
+        },
+      });
+
+  await prisma.reviewerEvaluation.upsert({
+    where: { reviewerAssignmentId: reviewerAssignment.id },
+    update: {
+      reviewerId: reviewer.id,
+      defenseRegistrationId: defenseRegistration.id,
+      comment: 'Nhận xét phản biện demo Sprint 5.',
+      eligibilityStatus: ReviewerEligibilityStatus.ELIGIBLE_FOR_DEFENSE,
+    },
+    create: {
+      reviewerAssignmentId: reviewerAssignment.id,
+      reviewerId: reviewer.id,
+      defenseRegistrationId: defenseRegistration.id,
+      comment: 'Nhận xét phản biện demo Sprint 5.',
+      strengths: 'Đề tài có tính ứng dụng rõ ràng.',
+      weaknesses: 'Cần bổ sung minh chứng kiểm thử trong bản cuối.',
+      questionSuggestions: 'Sinh viên hãy giải thích thêm về phân quyền RBAC.',
+      eligibilityStatus: ReviewerEligibilityStatus.ELIGIBLE_FOR_DEFENSE,
+    },
+  });
+
+  await prisma.reviewerScore.upsert({
+    where: { reviewerAssignmentId: reviewerAssignment.id },
+    update: { reviewerId: reviewer.id, score: 8.0, comment: 'Điểm phản biện demo Sprint 5' },
+    create: { reviewerAssignmentId: reviewerAssignment.id, reviewerId: reviewer.id, score: 8.0, comment: 'Điểm phản biện demo Sprint 5' },
+  });
+
+  await prisma.defenseRegistration.update({
+    where: { id: defenseRegistration.id },
+    data: { status: DefenseRegistrationStatus.READY_FOR_COUNCIL },
+  });
+
 }
 
 main()
   .then(async () => {
-    console.log('Seed completed: roles, demo users and Sprint 4 demo data are ready.');
+    console.log('Seed completed: roles, demo users and Sprint 5 demo data are ready.');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

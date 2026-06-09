@@ -1,0 +1,105 @@
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { AppException } from '../../common/exceptions/app.exception';
+import { AuthUser } from '../../common/types/auth-user.type';
+import { PrismaService } from '../../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { CreateReviewerScoreDto } from './dto/create-reviewer-score.dto';
+import { CreateSupervisorScoreDto } from './dto/create-supervisor-score.dto';
+import { UpdateReviewerScoreDto } from './dto/update-reviewer-score.dto';
+import { UpdateSupervisorScoreDto } from './dto/update-supervisor-score.dto';
+
+@Injectable()
+export class ScoresService {
+  constructor(private readonly prisma: PrismaService, private readonly auditLogsService: AuditLogsService) {}
+
+  async createSupervisorScore(dto: CreateSupervisorScoreDto, actor: AuthUser) {
+    const registration = await this.prisma.defenseRegistration.findUnique({
+      where: { id: dto.defenseRegistrationId },
+      include: { supervisor: true },
+    });
+    if (!registration) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ', HttpStatus.NOT_FOUND);
+    const lecturer = await this.getLecturerByUserId(actor.id);
+    if (registration.supervisorId !== lecturer.id) throw new AppException('DEFENSE_REGISTRATION_NOT_ALLOWED', 'GVHD không có quyền nhập điểm hồ sơ này', HttpStatus.FORBIDDEN);
+    this.validateScore(dto.score, 'SUPERVISOR_SCORE_INVALID');
+
+    const score = await this.prisma.supervisorScore.upsert({
+      where: { defenseRegistrationId: registration.id },
+      update: { score: dto.score, comment: dto.comment },
+      create: { defenseRegistrationId: registration.id, supervisorId: lecturer.id, score: dto.score, comment: dto.comment },
+    });
+    await this.audit(actor, 'SUPERVISOR_SCORE_CREATED', score.id);
+    return score;
+  }
+
+  async updateSupervisorScore(id: string, dto: UpdateSupervisorScoreDto, actor: AuthUser) {
+    const existing = await this.prisma.supervisorScore.findUnique({ where: { id } });
+    if (!existing) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy điểm hướng dẫn', HttpStatus.NOT_FOUND);
+    const lecturer = await this.getLecturerByUserId(actor.id);
+    if (existing.supervisorId !== lecturer.id) throw new AppException('DEFENSE_REGISTRATION_NOT_ALLOWED', 'GVHD không có quyền sửa điểm này', HttpStatus.FORBIDDEN);
+    if (typeof dto.score === 'number') this.validateScore(dto.score, 'SUPERVISOR_SCORE_INVALID');
+    const updated = await this.prisma.supervisorScore.update({ where: { id }, data: { score: dto.score, comment: dto.comment } });
+    await this.audit(actor, 'SUPERVISOR_SCORE_UPDATED', id);
+    return updated;
+  }
+
+  async getSupervisorScore(defenseRegistrationId: string, actor: AuthUser) {
+    const registration = await this.prisma.defenseRegistration.findUnique({ where: { id: defenseRegistrationId }, include: { student: true, supervisor: true } });
+    if (!registration) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ', HttpStatus.NOT_FOUND);
+    if (!actor.roles.includes('ADMIN') && !actor.roles.includes('FACULTY_MANAGER') && registration.student.userId !== actor.id && registration.supervisor.userId !== actor.id) {
+      throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy điểm hướng dẫn', HttpStatus.NOT_FOUND);
+    }
+    return this.prisma.supervisorScore.findUnique({ where: { defenseRegistrationId } });
+  }
+
+  async createReviewerScore(dto: CreateReviewerScoreDto, actor: AuthUser) {
+    const assignment = await this.prisma.reviewerAssignment.findUnique({ where: { id: dto.reviewerAssignmentId }, include: { reviewer: true } });
+    if (!assignment) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy phân công phản biện', HttpStatus.NOT_FOUND);
+    const lecturer = await this.getLecturerByUserId(actor.id);
+    if (assignment.reviewerId !== lecturer.id) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy phân công phản biện của bạn', HttpStatus.NOT_FOUND);
+    this.validateScore(dto.score, 'REVIEWER_SCORE_INVALID');
+
+    const score = await this.prisma.reviewerScore.upsert({
+      where: { reviewerAssignmentId: assignment.id },
+      update: { score: dto.score, comment: dto.comment },
+      create: { reviewerAssignmentId: assignment.id, reviewerId: lecturer.id, score: dto.score, comment: dto.comment },
+    });
+    await this.audit(actor, 'REVIEWER_SCORE_CREATED', score.id);
+    return score;
+  }
+
+  async updateReviewerScore(id: string, dto: UpdateReviewerScoreDto, actor: AuthUser) {
+    const existing = await this.prisma.reviewerScore.findUnique({ where: { id } });
+    if (!existing) throw new AppException('REVIEWER_SCORE_INVALID', 'Không tìm thấy điểm phản biện', HttpStatus.NOT_FOUND);
+    const lecturer = await this.getLecturerByUserId(actor.id);
+    if (existing.reviewerId !== lecturer.id) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không có quyền sửa điểm phản biện này', HttpStatus.NOT_FOUND);
+    if (typeof dto.score === 'number') this.validateScore(dto.score, 'REVIEWER_SCORE_INVALID');
+    const updated = await this.prisma.reviewerScore.update({ where: { id }, data: { score: dto.score, comment: dto.comment } });
+    await this.audit(actor, 'REVIEWER_SCORE_UPDATED', id);
+    return updated;
+  }
+
+  async getReviewerScore(reviewerAssignmentId: string, actor: AuthUser) {
+    const assignment = await this.prisma.reviewerAssignment.findUnique({ where: { id: reviewerAssignmentId }, include: { student: true, supervisor: true, reviewer: true } });
+    if (!assignment) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy phân công phản biện', HttpStatus.NOT_FOUND);
+    if (!actor.roles.includes('ADMIN') && !actor.roles.includes('FACULTY_MANAGER') && assignment.student.userId !== actor.id && assignment.supervisor.userId !== actor.id && assignment.reviewer.userId !== actor.id) {
+      throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy điểm phản biện', HttpStatus.NOT_FOUND);
+    }
+    return this.prisma.reviewerScore.findUnique({ where: { reviewerAssignmentId } });
+  }
+
+  private validateScore(score: number, errorCode: string) {
+    if (typeof score !== 'number' || Number.isNaN(score) || score < 0 || score > 10) {
+      throw new AppException(errorCode, 'Điểm phải nằm trong khoảng 0 đến 10', HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  private async getLecturerByUserId(userId: string) {
+    const lecturer = await this.prisma.lecturer.findUnique({ where: { userId } });
+    if (!lecturer) throw new AppException('SUPERVISOR_NOT_FOUND', 'Không tìm thấy hồ sơ giảng viên', HttpStatus.NOT_FOUND);
+    return lecturer;
+  }
+
+  private async audit(actor: AuthUser, action: string, targetId: string) {
+    await this.auditLogsService.create({ actorId: actor.id, actorEmail: actor.email, action, targetType: 'Score', targetId, result: 'SUCCESS' });
+  }
+}

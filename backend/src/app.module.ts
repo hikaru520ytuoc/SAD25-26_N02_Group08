@@ -14,6 +14,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { FilesModule } from './modules/files/files.module';
 import { OutlinesModule } from './modules/outlines/outlines.module';
 import { ProjectProgressModule } from './modules/project-progress/project-progress.module';
+import { DefenseRegistrationsModule } from './modules/defense-registrations/defense-registrations.module';
+import { ReviewersModule } from './modules/reviewers/reviewers.module';
+import { ScoresModule } from './modules/scores/scores.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -37,6 +40,9 @@ import { PrismaModule } from './prisma/prisma.module';
     FilesModule,
     OutlinesModule,
     ProjectProgressModule,
+    DefenseRegistrationsModule,
+    ReviewersModule,
+    ScoresModule,
   ],
 })
 export class AppModule {}

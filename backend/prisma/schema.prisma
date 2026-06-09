@@ -108,9 +108,32 @@ enum FileDocumentType {
   PROGRESS_DRAFT
   REPORT
   SLIDE
+  DEFENSE_DOCUMENT
   REVISION
   ARCHIVE
   OTHER
+}
+
+enum DefenseRegistrationStatus {
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED_BY_SUPERVISOR
+  REJECTED_BY_SUPERVISOR
+  SENT_TO_REVIEWER
+  REVIEWER_NEEDS_REVISION
+  APPROVED_BY_REVIEWER
+  READY_FOR_COUNCIL
+}
+
+enum ReviewerAssignmentStatus {
+  ASSIGNED
+  CANCELLED
+  COMPLETED
+}
+
+enum ReviewerEligibilityStatus {
+  ELIGIBLE_FOR_DEFENSE
+  NOT_ELIGIBLE_FOR_DEFENSE
 }
 
 model User {
@@ -136,6 +159,8 @@ model User {
   assignedSupervisors    SupervisorAssignment[] @relation("SupervisorAssignmentAssigner")
   reviewedOutlines       Outline[] @relation("OutlineReviewer")
   progressComments       ProjectProgressComment[] @relation("ProgressCommenter")
+  defenseReviews         DefenseRegistration[] @relation("DefenseSupervisorReviewer")
+  reviewerAssignmentsMade ReviewerAssignment[] @relation("ReviewerAssignmentAssigner")
   ownedFileDocuments     FileDocument[] @relation("FileOwner")
   uploadedFileDocuments  FileDocument[] @relation("FileUploader")
   notifications          Notification[]
@@ -219,6 +244,8 @@ model Student {
   supervisorAssignments SupervisorAssignment[]
   outlines              Outline[]
   projectProgresses     ProjectProgress[]
+  defenseRegistrations DefenseRegistration[]
+  reviewerAssignments  ReviewerAssignment[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -242,6 +269,12 @@ model Lecturer {
   supervisorAssignments        SupervisorAssignment[]
   supervisedOutlines           Outline[]
   supervisedProjectProgresses  ProjectProgress[]
+  supervisedDefenseRegistrations DefenseRegistration[] @relation("DefenseSupervisor")
+  reviewerAssignmentsAsSupervisor ReviewerAssignment[] @relation("ReviewerAssignmentSupervisor")
+  reviewerAssignmentsAsReviewer ReviewerAssignment[] @relation("ReviewerAssignmentReviewer")
+  reviewerEvaluations ReviewerEvaluation[]
+  supervisorScores SupervisorScore[]
+  reviewerScores ReviewerScore[]
 
   @@map("lecturers")
 }
@@ -267,6 +300,8 @@ model ProjectPeriod {
   supervisorAssignments SupervisorAssignment[]
   outlines              Outline[]
   projectProgresses     ProjectProgress[]
+  defenseRegistrations  DefenseRegistration[]
+  reviewerAssignments   ReviewerAssignment[]
 
   @@map("project_periods")
 }
@@ -350,6 +385,7 @@ model TopicRegistration {
   confirmedBy         User?                 @relation("RegistrationConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
   supervisorAssignment SupervisorAssignment?
   outline              Outline?
+  defenseRegistration  DefenseRegistration?
 
   @@index([studentId, projectPeriodId])
   @@index([status])
@@ -378,6 +414,7 @@ model SupervisorAssignment {
   assignedBy        User              @relation("SupervisorAssignmentAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
   outlines          Outline[]
   projectProgresses ProjectProgress[]
+  defenseRegistrations DefenseRegistration[]
 
   @@unique([studentId, projectPeriodId])
   @@index([supervisorId])
@@ -413,6 +450,7 @@ model Outline {
   projectPeriod        ProjectPeriod        @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
   reviewedBy           User?                @relation("OutlineReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   versions             OutlineVersion[]
+  defenseRegistrations DefenseRegistration[]
 
   @@index([studentId])
   @@index([supervisorId])
@@ -505,10 +543,138 @@ model FileDocument {
   uploadedBy           User              @relation("FileUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
   outlineVersions      OutlineVersion[]  @relation("OutlineVersionFile")
   projectProgressItems ProjectProgress[] @relation("ProjectProgressFile")
+  defenseReportRegistrations DefenseRegistration[] @relation("DefenseReportFile")
+  defenseSlideRegistrations DefenseRegistration[] @relation("DefenseSlideFile")
+  defenseAdditionalDocumentRegistrations DefenseRegistration[] @relation("DefenseAdditionalDocumentFile")
 
   @@index([ownerId])
   @@index([relatedType, relatedId])
   @@map("file_documents")
+}
+
+
+model DefenseRegistration {
+  id                       String                    @id @default(uuid())
+  studentId                String
+  supervisorId             String
+  supervisorAssignmentId   String
+  topicRegistrationId      String                    @unique
+  outlineId                String
+  projectPeriodId          String
+  reportFileId             String?
+  slideFileId              String?
+  additionalDocumentFileId String?
+  title                    String
+  summary                  String?
+  studentNote              String?
+  status                   DefenseRegistrationStatus @default(SUBMITTED)
+  supervisorFeedback       String?
+  supervisorReviewedAt     DateTime?
+  supervisorReviewedById   String?
+  submittedAt              DateTime                  @default(now())
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+
+  student                  Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor               Lecturer             @relation("DefenseSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  supervisorAssignment     SupervisorAssignment @relation(fields: [supervisorAssignmentId], references: [id], onDelete: Cascade)
+  topicRegistration        TopicRegistration    @relation(fields: [topicRegistrationId], references: [id], onDelete: Cascade)
+  outline                  Outline              @relation(fields: [outlineId], references: [id], onDelete: Cascade)
+  projectPeriod            ProjectPeriod        @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  reportFile               FileDocument?        @relation("DefenseReportFile", fields: [reportFileId], references: [id], onDelete: SetNull)
+  slideFile                FileDocument?        @relation("DefenseSlideFile", fields: [slideFileId], references: [id], onDelete: SetNull)
+  additionalDocumentFile   FileDocument?        @relation("DefenseAdditionalDocumentFile", fields: [additionalDocumentFileId], references: [id], onDelete: SetNull)
+  supervisorReviewedBy     User?                @relation("DefenseSupervisorReviewer", fields: [supervisorReviewedById], references: [id], onDelete: SetNull)
+  reviewerAssignment       ReviewerAssignment?
+  reviewerEvaluations      ReviewerEvaluation[]
+  supervisorScore          SupervisorScore?
+
+  @@unique([studentId, projectPeriodId])
+  @@index([supervisorId])
+  @@index([status])
+  @@map("defense_registrations")
+}
+
+model ReviewerAssignment {
+  id                    String                   @id @default(uuid())
+  defenseRegistrationId String                   @unique
+  studentId             String
+  projectPeriodId       String
+  supervisorId          String
+  reviewerId            String
+  assignedById          String
+  status                ReviewerAssignmentStatus @default(ASSIGNED)
+  assignedAt            DateTime                 @default(now())
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  supervisor          Lecturer            @relation("ReviewerAssignmentSupervisor", fields: [supervisorId], references: [id], onDelete: Restrict)
+  reviewer            Lecturer            @relation("ReviewerAssignmentReviewer", fields: [reviewerId], references: [id], onDelete: Restrict)
+  assignedBy          User                @relation("ReviewerAssignmentAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  evaluation          ReviewerEvaluation?
+  reviewerScore       ReviewerScore?
+
+  @@index([reviewerId])
+  @@index([projectPeriodId])
+  @@map("reviewer_assignments")
+}
+
+model ReviewerEvaluation {
+  id                    String                    @id @default(uuid())
+  reviewerAssignmentId  String                    @unique
+  reviewerId            String
+  defenseRegistrationId String
+  comment               String
+  strengths             String?
+  weaknesses            String?
+  questionSuggestions   String?
+  eligibilityStatus     ReviewerEligibilityStatus
+  feedbackToStudent     String?
+  submittedAt           DateTime                  @default(now())
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+
+  reviewerAssignment  ReviewerAssignment  @relation(fields: [reviewerAssignmentId], references: [id], onDelete: Cascade)
+  reviewer            Lecturer            @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+
+  @@index([reviewerId])
+  @@map("reviewer_evaluations")
+}
+
+model SupervisorScore {
+  id                    String   @id @default(uuid())
+  defenseRegistrationId String   @unique
+  supervisorId          String
+  score                 Float
+  comment               String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  supervisor          Lecturer            @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+
+  @@index([supervisorId])
+  @@map("supervisor_scores")
+}
+
+model ReviewerScore {
+  id                   String   @id @default(uuid())
+  reviewerAssignmentId String   @unique
+  reviewerId           String
+  score                Float
+  comment              String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  reviewerAssignment ReviewerAssignment @relation(fields: [reviewerAssignmentId], references: [id], onDelete: Cascade)
+  reviewer           Lecturer           @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+
+  @@index([reviewerId])
+  @@map("reviewer_scores")
 }
 
 model Notification {

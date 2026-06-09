@@ -14,7 +14,7 @@ export function FileUpload({ fileType, onUploaded }: { fileType: FileDocumentTyp
     if (!file) return;
 
     const maxMb = Number(process.env.NEXT_PUBLIC_MAX_FILE_SIZE_MB ?? 20);
-    const allowed = (process.env.NEXT_PUBLIC_ALLOWED_FILE_TYPES ?? '.pdf,.doc,.docx,.zip').split(',').map((item) => item.trim().toLowerCase());
+    const allowed = (process.env.NEXT_PUBLIC_ALLOWED_FILE_TYPES ?? '.pdf,.doc,.docx,.ppt,.pptx,.zip').split(',').map((item) => item.trim().toLowerCase());
     const ext = file.name.includes('.') ? `.${file.name.split('.').pop()?.toLowerCase()}` : '';
 
     if (file.size > maxMb * 1024 * 1024) {

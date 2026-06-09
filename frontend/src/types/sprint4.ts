@@ -2,7 +2,7 @@ import type { NotificationItem, SupervisorAssignment } from './sprint3';
 
 export type OutlineStatus = 'SUBMITTED' | 'NEEDS_REVISION' | 'APPROVED' | 'REJECTED';
 export type ProjectProgressStatus = 'SUBMITTED' | 'REVIEWED';
-export type FileDocumentType = 'OUTLINE' | 'PROGRESS_DRAFT' | 'REPORT' | 'SLIDE' | 'REVISION' | 'ARCHIVE' | 'OTHER';
+export type FileDocumentType = 'OUTLINE' | 'PROGRESS_DRAFT' | 'REPORT' | 'SLIDE' | 'DEFENSE_DOCUMENT' | 'REVISION' | 'ARCHIVE' | 'OTHER';
 
 export type FileDocument = {
   id: string;

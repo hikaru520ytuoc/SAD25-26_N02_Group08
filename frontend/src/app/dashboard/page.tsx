@@ -46,6 +46,7 @@ export default function DashboardPage() {
   const isFaculty = user.roles.includes('FACULTY_MANAGER') || isAdmin;
   const isSupervisor = user.roles.includes('SUPERVISOR');
   const isStudent = user.roles.includes('STUDENT') || isAdmin || user.roles.includes('FACULTY_MANAGER');
+  const isReviewer = user.roles.includes('REVIEWER') || isAdmin;
 
   return (
     <AppShell>
@@ -142,6 +143,15 @@ export default function DashboardPage() {
             </Link>
           )}
 
+
+          {isStudent && (
+            <Link href="/student/defense-registration" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Đăng ký bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Nộp báo cáo, slide và theo dõi trạng thái điều kiện bảo vệ.</p>
+            </Link>
+          )}
+
           {isSupervisor && (
             <Link href="/supervisor/registration-requests" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
               <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
@@ -174,6 +184,15 @@ export default function DashboardPage() {
             </Link>
           )}
 
+
+          {isSupervisor && (
+            <Link href="/supervisor/defense-registrations" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Duyệt điều kiện bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Kiểm tra hồ sơ, nhập điểm hướng dẫn và xác nhận điều kiện bảo vệ.</p>
+            </Link>
+          )}
+
           {isFaculty && (
             <Link href="/faculty/topic-registrations" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
               <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
@@ -190,6 +209,23 @@ export default function DashboardPage() {
             </Link>
           )}
 
+
+          {isFaculty && (
+            <Link href="/faculty/reviewer-assignments" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Users className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Phân công GVPB</h2>
+              <p className="mt-2 text-slate-600">Phân công giảng viên phản biện cho hồ sơ đã được GVHD xác nhận.</p>
+            </Link>
+          )}
+
+          {isReviewer && (
+            <Link href="/reviewer/assignments" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <BookOpen className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Phản biện đồ án</h2>
+              <p className="mt-2 text-slate-600">Xem hồ sơ được phân công, nhập nhận xét và điểm phản biện.</p>
+            </Link>
+          )}
+
           <Link href="/notifications" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
             <Bell className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Thông báo</h2>
@@ -199,7 +235,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Đăng ký bảo vệ, phản biện, hội đồng, chấm điểm và lưu trữ sẽ được triển khai ở sprint sau.</p>
+            <p className="mt-2 text-slate-600">Hội đồng, lịch bảo vệ, điểm hội đồng, tính điểm tổng kết và lưu trữ sẽ được triển khai ở sprint sau.</p>
           </div>
         </div>
       </div>

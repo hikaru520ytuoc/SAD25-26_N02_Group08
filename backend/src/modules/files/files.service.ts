@@ -139,6 +139,18 @@ export class FilesService {
       if (progress && (progress.student.userId === actor.id || progress.supervisor.userId === actor.id)) return;
     }
 
+    if (file.relatedType === 'DEFENSE_REGISTRATION' && file.relatedId) {
+      const registration = await this.prisma.defenseRegistration.findUnique({
+        where: { id: file.relatedId },
+        include: {
+          student: true,
+          supervisor: true,
+          reviewerAssignment: { include: { reviewer: true } },
+        },
+      });
+      if (registration && (registration.student.userId === actor.id || registration.supervisor.userId === actor.id || registration.reviewerAssignment?.reviewer.userId === actor.id)) return;
+    }
+
     throw new AppException('FILE_ACCESS_DENIED', 'Bạn không có quyền truy cập file này', HttpStatus.FORBIDDEN);
   }
 
@@ -165,7 +177,7 @@ export class FilesService {
       throw new AppException('FILE_UPLOAD_TOO_LARGE', `File vượt quá dung lượng ${maxMb}MB`, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
-    const allowedTypes = (process.env.ALLOWED_FILE_TYPES ?? 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/zip,application/x-zip-compressed')
+    const allowedTypes = (process.env.ALLOWED_FILE_TYPES ?? 'application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,application/zip,application/x-zip-compressed')
       .split(',')
       .map((item) => item.trim())
       .filter(Boolean);
