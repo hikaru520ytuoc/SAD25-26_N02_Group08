@@ -159,7 +159,8 @@ export class CouncilsService {
   }
 
   private async ensureUniqueChairSecretary(councilId: string, role: CouncilRole, excludeMemberId?: string) {
-    if (![CouncilRole.CHAIR, CouncilRole.SECRETARY].includes(role)) return;
+    const uniqueCouncilRoles: CouncilRole[] = [CouncilRole.CHAIR, CouncilRole.SECRETARY];
+    if (!uniqueCouncilRoles.includes(role)) return;
     const existing = await this.prisma.councilMember.findFirst({
       where: { councilId, roleInCouncil: role, id: excludeMemberId ? { not: excludeMemberId } : undefined },
     });
