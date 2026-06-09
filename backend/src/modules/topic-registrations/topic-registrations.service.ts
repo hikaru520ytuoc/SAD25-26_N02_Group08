@@ -135,8 +135,8 @@ export class TopicRegistrationsService {
     const period = await this.ensureProjectPeriod(dto.projectPeriodId);
     this.ensurePeriodAllowsRegistration(period.status);
 
-    let supervisorResponseStatus = SupervisorResponseStatus.NOT_REQUIRED;
-    let status = TopicRegistrationStatus.PENDING_FACULTY;
+    let supervisorResponseStatus: SupervisorResponseStatus = SupervisorResponseStatus.NOT_REQUIRED;
+    let status: TopicRegistrationStatus = TopicRegistrationStatus.PENDING_FACULTY;
 
     if (dto.requestedSupervisorId) {
       await this.ensureLecturerExists(dto.requestedSupervisorId);
@@ -312,7 +312,7 @@ export class TopicRegistrationsService {
     await this.ensureNoActiveAssignment(registration.studentId, registration.projectPeriodId);
 
     let officialTopicId = registration.topicId;
-    let assignmentType = SupervisorAssignmentType.TOPIC_OWNER;
+    let assignmentType: SupervisorAssignmentType = SupervisorAssignmentType.TOPIC_OWNER;
 
     if (registration.registrationType === TopicRegistrationType.STUDENT_PROPOSED) {
       officialTopicId = await this.createOfficialTopicFromProposal(registration, supervisor.id, actor);
@@ -360,10 +360,15 @@ export class TopicRegistrationsService {
       message: 'Khoa đã xác nhận đề tài và GVHD chính thức cho bạn.',
       type: 'REGISTRATION_CONFIRMED',
     });
+    const studentUser = await this.prisma.user.findUnique({
+      where: { id: registration.student.userId },
+      select: { fullName: true },
+    });
+
     await this.notificationsService.create({
       userId: supervisor.userId,
       title: 'Phân công GVHD chính thức',
-      message: `Bạn đã được phân công hướng dẫn sinh viên ${registration.student.user.fullName}.`,
+      message: `Bạn đã được phân công hướng dẫn sinh viên ${studentUser?.fullName ?? registration.student.studentCode}.`,
       type: 'SUPERVISOR_ASSIGNMENT_CREATED',
     });
 

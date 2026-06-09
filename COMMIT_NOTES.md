@@ -35,3 +35,17 @@ git commit -m "feat(sprint-3): implement topic registration and supervisor assig
 - Add frontend supervisor request, faculty registration processing and assignment pages
 - Update dashboard links, README, run guide and Sprint 3 test cases"
 ```
+
+---
+
+## Sprint 3 Hotfix Commit
+
+```text
+fix(sprint-3): fix TypeScript build errors in topic registration workflow
+
+- Fix enum literal type inference errors in topic registration service
+- Explicitly type supervisor response status, registration status and assignment type variables
+- Fix student notification message by querying student user profile explicitly
+- Keep Sprint 3 workflow and business rules unchanged
+- Add troubleshooting notes for backend Docker build failure
+```
