@@ -1,51 +1,36 @@
-# Commit Notes
+# Commit notes - Sprint 4
 
-## Sprint 3
+## Commit chính
 
 ```text
-feat(sprint-3): implement topic registration and supervisor assignment workflow
+feat(sprint-4): implement outline submission and project progress workflow
 
-- Add Prisma schema and migration for topic registrations, supervisor assignments and notifications
-- Add topic registration module for existing topic registration and student topic proposal
-- Add supervisor response flow for accepting or rejecting supervision requests
-- Add faculty processing flow for assigning supervisor, confirming and rejecting registrations
-- Add supervisor assignment module for official assignment lookup by faculty, supervisor and student
-- Add basic notification module with current-user notifications and read actions
-- Add audit logs for registration, supervisor response, faculty confirmation and assignment actions
-- Add Sprint 3 seed data for second supervisor and additional published topic
-- Add frontend student topic registration and proposal page
-- Add frontend supervisor request, faculty registration processing and assignment pages
-- Update dashboard links, README, run guide and Sprint 3 test cases
+- Add Prisma schema and migration for outlines, outline versions, project progress, progress comments and file documents
+- Add file storage module with MinIO upload, metadata persistence and permission-checked download
+- Add outline module for student submission, resubmission, supervisor approval and revision requests
+- Add project progress module for student progress updates and supervisor comments
+- Add notification and audit log events for outline, progress and file actions
+- Add Sprint 4 seed data to ensure demo student has official supervisor assignment
+- Add frontend student outline and progress pages
+- Add frontend supervisor outline review and progress tracking pages
+- Add reusable file upload and file download components
+- Update environment examples, Docker Compose, README, run guide and Sprint 4 test cases
 ```
 
-### Lệnh commit
+## Lệnh commit
 
 ```bash
 git add .
-git commit -m "feat(sprint-3): implement topic registration and supervisor assignment workflow" \
-  -m "- Add Prisma schema and migration for topic registrations, supervisor assignments and notifications
-- Add topic registration module for existing topic registration and student topic proposal
-- Add supervisor response flow for accepting or rejecting supervision requests
-- Add faculty processing flow for assigning supervisor, confirming and rejecting registrations
-- Add supervisor assignment module for official assignment lookup by faculty, supervisor and student
-- Add basic notification module with current-user notifications and read actions
-- Add audit logs for registration, supervisor response, faculty confirmation and assignment actions
-- Add Sprint 3 seed data for second supervisor and additional published topic
-- Add frontend student topic registration and proposal page
-- Add frontend supervisor request, faculty registration processing and assignment pages
-- Update dashboard links, README, run guide and Sprint 3 test cases"
-```
 
----
-
-## Sprint 3 Hotfix Commit
-
-```text
-fix(sprint-3): fix TypeScript build errors in topic registration workflow
-
-- Fix enum literal type inference errors in topic registration service
-- Explicitly type supervisor response status, registration status and assignment type variables
-- Fix student notification message by querying student user profile explicitly
-- Keep Sprint 3 workflow and business rules unchanged
-- Add troubleshooting notes for backend Docker build failure
+git commit -m "feat(sprint-4): implement outline submission and project progress workflow" \
+  -m "- Add Prisma schema and migration for outlines, outline versions, project progress, progress comments and file documents
+- Add file storage module with MinIO upload, metadata persistence and permission-checked download
+- Add outline module for student submission, resubmission, supervisor approval and revision requests
+- Add project progress module for student progress updates and supervisor comments
+- Add notification and audit log events for outline, progress and file actions
+- Add Sprint 4 seed data to ensure demo student has official supervisor assignment
+- Add frontend student outline and progress pages
+- Add frontend supervisor outline review and progress tracking pages
+- Add reusable file upload and file download components
+- Update environment examples, Docker Compose, README, run guide and Sprint 4 test cases"
 ```

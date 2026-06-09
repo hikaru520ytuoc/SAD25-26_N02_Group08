@@ -1,21 +1,20 @@
-# Hệ thống quản lý đồ án tốt nghiệp
+# Graduation Project Management System
 
-## 1. Mô tả ngắn
+Web application quản lý đồ án tốt nghiệp theo kiến trúc Client-Server, Modular Monolith và Layered Architecture.
 
-Dự án **Hệ thống quản lý đồ án tốt nghiệp** là web application hỗ trợ quản lý quy trình đồ án tốt nghiệp của sinh viên. Sprint 1 tập trung vào nền tảng xác thực, người dùng và phân quyền: đăng nhập JWT, quản lý user, role, gán role và audit log cơ bản.
+## Sprint hiện tại
 
-Sprint 1 chưa triển khai các nghiệp vụ đồ án như đề tài, đăng ký đề tài, đề cương, bảo vệ, phản biện, hội đồng, chấm điểm hoặc lưu trữ hồ sơ.
+Sprint 4 triển khai nghiệp vụ nộp/duyệt đề cương, theo dõi tiến độ và upload file qua MinIO.
 
-## 2. Công nghệ sử dụng
+### Module đã có
 
-### Frontend
+- Sprint 0: nền tảng monorepo, Docker Compose, NestJS, Next.js, PostgreSQL, Redis, MinIO, Nginx.
+- Sprint 1: Auth, User, Role, JWT, RBAC, Audit Log cơ bản.
+- Sprint 2: Project Period, Student Eligibility, Topic workflow.
+- Sprint 3: Topic Registration, Supervisor Assignment, Notification cơ bản.
+- Sprint 4: Outline, Project Progress, File Storage MinIO.
 
-- Next.js App Router
-- TypeScript
-- Tailwind CSS
-- React Hook Form
-- Zod
-- Fetch API wrapper
+## Công nghệ
 
 ### Backend
 
@@ -25,286 +24,54 @@ Sprint 1 chưa triển khai các nghiệp vụ đồ án như đề tài, đăng
 - PostgreSQL
 - JWT Authentication
 - RBAC Authorization
-- bcryptjs
 - Swagger/OpenAPI
-- class-validator
-- class-transformer
+- MinIO SDK
 
-### Infrastructure
+### Frontend
 
+- Next.js App Router
+- TypeScript
+- Tailwind CSS
+- React Hook Form/Zod-friendly structure
+- Fetch wrapper
+
+### DevOps
+
+- Docker
+- Docker Compose
 - PostgreSQL
 - Redis
 - MinIO
-- Docker
-- Docker Compose
 - Nginx
 
-## 3. Cấu trúc thư mục
+## Environment
 
-```text
-graduation-project-management/
-├── backend/
-│   ├── src/
-│   │   ├── common/
-│   │   │   ├── decorators/
-│   │   │   ├── exceptions/
-│   │   │   ├── filters/
-│   │   │   ├── guards/
-│   │   │   ├── responses/
-│   │   │   └── types/
-│   │   ├── modules/
-│   │   │   ├── audit-logs/
-│   │   │   ├── auth/
-│   │   │   ├── health/
-│   │   │   ├── roles/
-│   │   │   └── users/
-│   │   ├── prisma/
-│   │   ├── app.module.ts
-│   │   └── main.ts
-│   ├── prisma/
-│   │   ├── schema.prisma
-│   │   └── seed.ts
-│   ├── Dockerfile
-│   └── .env.example
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   ├── components/
-│   │   ├── lib/
-│   │   ├── schemas/
-│   │   ├── services/
-│   │   └── types/
-│   ├── Dockerfile
-│   └── .env.example
-├── nginx/
-├── docker-compose.yml
-├── COMMIT_NOTES.md
-├── INSTALL_RUN_COMMANDS.md
-├── SPRINT1_SUMMARY.md
-├── TEST_CASES_SPRINT1.md
-└── README.md
+Backend cần các biến chính:
+
+```env
+DATABASE_URL=postgresql://postgres:postgres@postgres:5432/graduation_project_db?schema=public
+JWT_SECRET=change-me-in-production
+JWT_EXPIRES_IN=1d
+CORS_ORIGIN=http://localhost:3000,http://localhost
+MINIO_ENDPOINT=minio
+MINIO_PORT=9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin123
+MINIO_BUCKET=graduation-project-files
+MAX_FILE_SIZE_MB=20
+ALLOWED_FILE_TYPES=application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/zip,application/x-zip-compressed
 ```
 
-## 4. Yêu cầu cài đặt
+Frontend cần:
 
-- Node.js 20+
-- Docker
-- Docker Compose
-
-## 5. Chạy toàn bộ hệ thống bằng Docker Compose
-
-Từ thư mục root:
-
-```bash
-cp .env.example .env
-docker compose up -d --build
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_APP_NAME=Graduation Project Management
+NEXT_PUBLIC_MAX_FILE_SIZE_MB=20
+NEXT_PUBLIC_ALLOWED_FILE_TYPES=.pdf,.doc,.docx,.zip
 ```
 
-Kiểm tra container:
-
-```bash
-docker compose ps
-```
-
-## 6. Chạy migration và seed dữ liệu Sprint 1
-
-Sau khi container chạy:
-
-```bash
-docker compose exec backend npx prisma migrate dev --name sprint_1_auth_user_role
-docker compose exec backend npm run prisma:seed
-```
-
-Nếu muốn chạy backend riêng ở local, xem mục 7.
-
-## 7. Chạy backend riêng
-
-```bash
-docker compose up -d postgres redis minio
-cd backend
-cp .env.example .env
-npm install
-npx prisma generate
-npx prisma migrate dev --name sprint_1_auth_user_role
-npm run prisma:seed
-npm run start:dev
-```
-
-Backend chạy tại:
-
-```text
-http://localhost:8080/api
-```
-
-Health check:
-
-```text
-http://localhost:8080/api/health
-```
-
-Swagger:
-
-```text
-http://localhost:8080/api/docs
-```
-
-## 8. Chạy frontend riêng
-
-```bash
-cd frontend
-cp .env.example .env.local
-npm install
-npm run dev
-```
-
-Frontend chạy tại:
-
-```text
-http://localhost:3000
-```
-
-## 9. Tài khoản demo
-
-Các tài khoản này chỉ dùng cho môi trường development/demo.
-
-| Role | Email | Password |
-|---|---|---|
-| ADMIN | admin@example.com | Admin@123456 |
-| STUDENT | student@example.com | Student@123456 |
-| SUPERVISOR | supervisor@example.com | Supervisor@123456 |
-| FACULTY_MANAGER | faculty@example.com | Faculty@123456 |
-
-## 10. URL truy cập
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Login | http://localhost:3000/login |
-| Dashboard | http://localhost:3000/dashboard |
-| Admin Users | http://localhost:3000/admin/users |
-| Backend health | http://localhost:8080/api/health |
-| Swagger | http://localhost:8080/api/docs |
-| Nginx reverse proxy | http://localhost |
-| MinIO Console | http://localhost:9001 |
-| PostgreSQL | localhost:5432 |
-| Redis | localhost:6379 |
-
-MinIO mặc định:
-
-```text
-Username: minioadmin
-Password: minioadmin123
-```
-
-## 11. API Sprint 1 chính
-
-| Method | Endpoint | Role |
-|---|---|---|
-| POST | /api/auth/login | Public |
-| GET | /api/auth/me | Authenticated |
-| GET | /api/users | ADMIN |
-| GET | /api/users/:id | ADMIN |
-| POST | /api/users | ADMIN |
-| PATCH | /api/users/:id | ADMIN |
-| PATCH | /api/users/:id/lock | ADMIN |
-| PATCH | /api/users/:id/unlock | ADMIN |
-| PATCH | /api/users/:id/roles | ADMIN |
-| GET | /api/roles | ADMIN |
-| POST | /api/roles | ADMIN |
-| PATCH | /api/roles/:id | ADMIN |
-| GET | /api/audit-logs | ADMIN |
-
-## 12. Test nhanh API bằng curl
-
-Đăng nhập admin:
-
-```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"admin@example.com","password":"Admin@123456"}'
-```
-
-Lấy profile, thay `<TOKEN>` bằng accessToken:
-
-```bash
-curl http://localhost:8080/api/auth/me \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-Lấy danh sách user:
-
-```bash
-curl http://localhost:8080/api/users \
-  -H "Authorization: Bearer <TOKEN>"
-```
-
-## 13. Dừng hệ thống
-
-```bash
-docker compose down
-```
-
-Xóa cả volume dữ liệu:
-
-```bash
-docker compose down -v
-```
-
-## 14. Lưu ý bảo mật
-
-- Không commit file `.env` thật.
-- Không dùng `JWT_SECRET=change-me-in-production` khi triển khai thật.
-- Không dùng mật khẩu demo trong production.
-- Không public MinIO bucket trong môi trường production.
-- Sprint 1 lưu token ở localStorage để phục vụ demo môn học; production nên cân nhắc httpOnly cookie.
-
----
-
-## Sprint 1 Hotfix: backend restart, Prisma drift and seed error
-
-If the backend container is restarting, or Prisma reports migration drift, or seed fails with `Unknown file extension ".ts"`, run the clean development reset below.
-
-> This removes local Docker volumes. Use only for development/demo.
-
-```bash
-docker compose down -v
-
-docker compose build --no-cache backend frontend
-
-docker compose up -d postgres redis minio
-
-docker compose run --rm backend npx prisma migrate deploy
-
-docker compose run --rm backend npm run prisma:seed
-
-docker compose up -d --build
-```
-
-Check backend:
-
-```bash
-curl http://localhost:8080/api/health
-```
-
-Check logs if needed:
-
-```bash
-docker logs gpm_backend --tail=200
-```
-
----
-
-## Hotfix v2: backend Restarting vì `/app/dist/main.js`
-
-Nếu backend container bị restart và log có lỗi:
-
-```text
-Error: Cannot find module '/app/dist/main.js'
-```
-
-bản này đã sửa `backend/Dockerfile` để hỗ trợ cả `dist/main.js` và `dist/src/main.js`.
-
-Chạy lại từ đầu:
+## Chạy bằng Docker Compose
 
 ```bash
 docker compose down -v
@@ -327,185 +94,82 @@ docker compose ps
 curl http://localhost:8080/api/health
 ```
 
----
-
-# Sprint 2 - Project Period, Student Eligibility and Topic Foundation
-
-## Implemented scope
-
-Sprint 2 implements the first business foundation of the graduation project management system:
-
-- Project Period Module
-- Student Eligibility Module
-- Topic Module
-- Faculty project period management UI
-- Faculty student eligibility UI
-- Supervisor topic management UI
-- Faculty topic approval/publish UI
-- Student published topic list UI
-
-Sprint 2 does not implement topic registration, supervisor assignment, outline submission, defense, reviewer, council, scoring or archive workflows.
-
-## Run Sprint 2 with Docker Compose
-
-For a clean development/demo database:
-
-```bash
-docker compose down -v
-
-docker compose build --no-cache backend frontend
-
-docker compose up -d postgres redis minio
-
-docker compose run --rm backend npx prisma migrate deploy
-
-docker compose run --rm backend npm run prisma:seed
-
-docker compose up -d --build
-```
-
-Verify:
-
-```bash
-docker compose ps
-curl http://localhost:8080/api/health
-```
-
-## Demo accounts
-
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@example.com | Admin@123456 |
-| Student | student@example.com | Student@123456 |
-| Supervisor | supervisor@example.com | Supervisor@123456 |
-| Faculty Manager | faculty@example.com | Faculty@123456 |
-
-## Sprint 2 demo URLs
-
-| Page | URL |
-|---|---|
-| Faculty Project Periods | http://localhost:3000/faculty/project-periods |
-| Faculty Student Eligibilities | http://localhost:3000/faculty/student-eligibilities |
-| Faculty Topic Approval | http://localhost:3000/faculty/topics |
-| Supervisor Topics | http://localhost:3000/supervisor/topics |
-| Student Published Topics | http://localhost:3000/topics |
-
-## Sprint 2 API groups
-
-| Module | Endpoints |
-|---|---|
-| Project Periods | `/api/project-periods` |
-| Student Eligibilities | `/api/student-eligibilities` |
-| Topics | `/api/topics`, `/api/topics/my`, `/api/topics/published` |
-
-## Demo flow
-
-1. Login as Faculty Manager.
-2. Open `/faculty/project-periods`, create/open a project period.
-3. Open `/faculty/student-eligibilities`, view demo eligible student or add one by UUID.
-4. Login as Supervisor.
-5. Open `/supervisor/topics`, create a topic and submit it.
-6. Login as Faculty Manager.
-7. Open `/faculty/topics`, approve and publish the topic.
-8. Login as Student.
-9. Open `/topics`, confirm only published topics are visible.
-
-## Sprint 2 commit
-
-```text
-feat(sprint-2): implement project period, eligibility and topic foundation
-```
-
-## Sprint 2 Runtime Hotfix Note
-
-If backend build and Prisma seed succeed but `gpm_backend` is still `Restarting (1)`, use:
+Nếu backend restart:
 
 ```bash
 docker logs gpm_backend --tail=200
 ```
 
-This release fixes the Sprint 2 runtime issue by importing `JwtModule` in:
+## URL
 
-- ProjectPeriodsModule
-- StudentEligibilitiesModule
-- TopicsModule
+- Frontend: http://localhost:3000
+- Login: http://localhost:3000/login
+- Dashboard: http://localhost:3000/dashboard
+- Swagger: http://localhost:8080/api/docs
+- MinIO Console: http://localhost:9001
 
-Then rebuild cleanly:
+### Sprint 4 routes
 
-```bash
-docker compose down -v
-docker compose build --no-cache backend frontend
-docker compose up -d postgres redis minio
-docker compose run --rm backend npx prisma migrate deploy
-docker compose run --rm backend npm run prisma:seed
-docker compose up -d --build
-```
+- Student outline: http://localhost:3000/student/outline
+- Supervisor outline review: http://localhost:3000/supervisor/outlines
+- Student progress: http://localhost:3000/student/progress
+- Supervisor progress: http://localhost:3000/supervisor/progress
 
----
+## Demo accounts
 
-# Sprint 3 - Topic Registration and Supervisor Assignment
+- Admin: admin@example.com / Admin@123456
+- Student: student@example.com / Student@123456
+- Supervisor 1: supervisor@example.com / Supervisor@123456
+- Supervisor 2: supervisor2@example.com / Supervisor2@123456
+- Faculty Manager: faculty@example.com / Faculty@123456
 
-## Scope
-Sprint 3 triển khai Phase 2 của Giai đoạn 1: đăng ký và xét duyệt đề tài.
+## Sprint 4 demo flow
 
-Included:
-- Student register existing published topic.
-- Student propose new topic.
-- Student request supervisor.
-- Supervisor accept/reject request.
-- Faculty assign supervisor.
-- Faculty confirm official topic and supervisor.
-- Faculty reject registration/proposal.
-- Supervisor assignment lookup.
-- Basic notification.
-- Audit log for important actions.
+1. Login `student@example.com`.
+2. Vào `/student/outline` để upload file và nộp đề cương.
+3. Login `supervisor@example.com`.
+4. Vào `/supervisor/outlines` để yêu cầu chỉnh sửa hoặc duyệt đề cương.
+5. Nếu yêu cầu chỉnh sửa, student nộp lại đề cương.
+6. Supervisor duyệt đề cương.
+7. Student vào `/student/progress` để cập nhật tiến độ và upload bản nháp/tài liệu.
+8. Supervisor vào `/supervisor/progress` để góp ý tiến độ.
+9. Kiểm tra notification tại `/notifications`.
 
-Not included:
-- Outline submission.
-- Project progress.
-- Defense registration.
-- Reviewer/council/scoring/archive modules.
+## API Sprint 4
 
-## Run Sprint 3
+### Files
 
-```bash
-docker compose down -v
+- `POST /api/files/upload`
+- `GET /api/files`
+- `GET /api/files/:id`
+- `GET /api/files/:id/download`
+- `DELETE /api/files/:id`
 
-docker compose build --no-cache backend frontend
+### Outlines
 
-docker compose up -d postgres redis minio
+- `GET /api/outlines/me`
+- `GET /api/outlines/supervisor`
+- `GET /api/outlines`
+- `GET /api/outlines/:id`
+- `GET /api/outlines/:id/history`
+- `POST /api/outlines`
+- `PATCH /api/outlines/:id/resubmit`
+- `PATCH /api/outlines/:id/approve`
+- `PATCH /api/outlines/:id/request-revision`
 
-docker compose run --rm backend npx prisma migrate deploy
+### Project Progress
 
-docker compose run --rm backend npm run prisma:seed
+- `GET /api/project-progress/me`
+- `GET /api/project-progress/supervisor`
+- `GET /api/project-progress/:id`
+- `POST /api/project-progress`
+- `PATCH /api/project-progress/:id`
+- `POST /api/project-progress/:id/comments`
+- `GET /api/project-progress/:id/comments`
 
-docker compose up -d --build
-```
+## Sprint 4 assumptions
 
-## Verify
-
-```bash
-docker compose ps
-curl http://localhost:8080/api/health
-```
-
-## Sprint 3 pages
-
-```text
-/student/topic-registration
-/supervisor/registration-requests
-/faculty/topic-registrations
-/faculty/supervisor-assignments
-/supervisor/my-students
-/student/supervisor-assignment
-/notifications
-```
-
-## Sprint 3 demo accounts
-
-```text
-Student:          student@example.com / Student@123456
-Supervisor 1:     supervisor@example.com / Supervisor@123456
-Supervisor 2:     supervisor2@example.com / Supervisor2@123456
-Faculty Manager:  faculty@example.com / Faculty@123456
-```
+- File đề cương là optional trong form demo, nhưng backend hỗ trợ gắn `fileDocumentId` sau khi upload.
+- Khi outline được APPROVED, hệ thống cho phép cập nhật tiến độ bằng rule kiểm tra outline APPROVED thay vì tạo thêm bảng workflow phức tạp.
+- Download file đi qua backend để kiểm tra quyền; MinIO bucket không public.
+- Không triển khai đăng ký bảo vệ, phản biện, hội đồng, chấm điểm hoặc lưu trữ trong Sprint 4.

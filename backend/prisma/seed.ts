@@ -4,6 +4,11 @@ import {
   InternshipStatus,
   PrismaClient,
   ProjectPeriodStatus,
+  SupervisorAssignmentStatus,
+  SupervisorAssignmentType,
+  SupervisorResponseStatus,
+  TopicRegistrationStatus,
+  TopicRegistrationType,
   TopicSource,
   TopicStatus,
   UserStatus,
@@ -260,11 +265,74 @@ async function main() {
       },
     });
   }
+  const officialTopic = await prisma.topic.findFirstOrThrow({
+    where: {
+      title: 'Xây dựng hệ thống quản lý đồ án tốt nghiệp',
+      projectPeriodId: period.id,
+      supervisorId: lecturer.id,
+    },
+  });
+
+  const existingRegistration = await prisma.topicRegistration.findFirst({
+    where: { studentId: student.id, projectPeriodId: period.id },
+  });
+
+  const officialRegistration = existingRegistration
+    ? await prisma.topicRegistration.update({
+        where: { id: existingRegistration.id },
+        data: {
+          registrationType: TopicRegistrationType.EXISTING_TOPIC,
+          topicId: officialTopic.id,
+          requestedSupervisorId: lecturer.id,
+          supervisorResponseStatus: SupervisorResponseStatus.NOT_REQUIRED,
+          status: TopicRegistrationStatus.OFFICIALLY_ASSIGNED,
+          confirmedById: users.FACULTY_MANAGER.id,
+          confirmedAt: new Date(),
+        },
+      })
+    : await prisma.topicRegistration.create({
+        data: {
+          studentId: student.id,
+          projectPeriodId: period.id,
+          registrationType: TopicRegistrationType.EXISTING_TOPIC,
+          topicId: officialTopic.id,
+          requestedSupervisorId: lecturer.id,
+          supervisorResponseStatus: SupervisorResponseStatus.NOT_REQUIRED,
+          status: TopicRegistrationStatus.OFFICIALLY_ASSIGNED,
+          confirmedById: users.FACULTY_MANAGER.id,
+          confirmedAt: new Date(),
+        },
+      });
+
+  await prisma.supervisorAssignment.upsert({
+    where: { studentId_projectPeriodId: { studentId: student.id, projectPeriodId: period.id } },
+    update: {
+      topicRegistrationId: officialRegistration.id,
+      topicId: officialTopic.id,
+      supervisorId: lecturer.id,
+      assignedById: users.FACULTY_MANAGER.id,
+      assignmentType: SupervisorAssignmentType.TOPIC_OWNER,
+      status: SupervisorAssignmentStatus.ACTIVE,
+      assignedAt: new Date(),
+    },
+    create: {
+      topicRegistrationId: officialRegistration.id,
+      studentId: student.id,
+      topicId: officialTopic.id,
+      projectPeriodId: period.id,
+      supervisorId: lecturer.id,
+      assignedById: users.FACULTY_MANAGER.id,
+      assignmentType: SupervisorAssignmentType.TOPIC_OWNER,
+      status: SupervisorAssignmentStatus.ACTIVE,
+      assignedAt: new Date(),
+    },
+  });
+
 }
 
 main()
   .then(async () => {
-    console.log('Seed completed: roles, demo users and Sprint 3 demo data are ready.');
+    console.log('Seed completed: roles, demo users and Sprint 4 demo data are ready.');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

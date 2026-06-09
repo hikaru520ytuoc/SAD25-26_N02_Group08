@@ -91,6 +91,28 @@ enum SupervisorAssignmentStatus {
   CANCELLED
 }
 
+enum OutlineStatus {
+  SUBMITTED
+  NEEDS_REVISION
+  APPROVED
+  REJECTED
+}
+
+enum ProjectProgressStatus {
+  SUBMITTED
+  REVIEWED
+}
+
+enum FileDocumentType {
+  OUTLINE
+  PROGRESS_DRAFT
+  REPORT
+  SLIDE
+  REVISION
+  ARCHIVE
+  OTHER
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -112,6 +134,10 @@ model User {
   approvedTopics         Topic[] @relation("TopicApprover")
   confirmedRegistrations TopicRegistration[] @relation("RegistrationConfirmer")
   assignedSupervisors    SupervisorAssignment[] @relation("SupervisorAssignmentAssigner")
+  reviewedOutlines       Outline[] @relation("OutlineReviewer")
+  progressComments       ProjectProgressComment[] @relation("ProgressCommenter")
+  ownedFileDocuments     FileDocument[] @relation("FileOwner")
+  uploadedFileDocuments  FileDocument[] @relation("FileUploader")
   notifications          Notification[]
 
   @@map("users")
@@ -191,6 +217,10 @@ model Student {
   eligibilities         StudentEligibility[]
   topicRegistrations    TopicRegistration[]
   supervisorAssignments SupervisorAssignment[]
+  outlines              Outline[]
+  projectProgresses     ProjectProgress[]
+  outlines              Outline[]
+  projectProgresses     ProjectProgress[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -212,6 +242,8 @@ model Lecturer {
   topics                       Topic[]
   requestedTopicRegistrations  TopicRegistration[]
   supervisorAssignments        SupervisorAssignment[]
+  supervisedOutlines           Outline[]
+  supervisedProjectProgresses  ProjectProgress[]
 
   @@map("lecturers")
 }
@@ -235,6 +267,8 @@ model ProjectPeriod {
   topics                Topic[]
   topicRegistrations    TopicRegistration[]
   supervisorAssignments SupervisorAssignment[]
+  outlines              Outline[]
+  projectProgresses     ProjectProgress[]
 
   @@map("project_periods")
 }
@@ -286,6 +320,8 @@ model Topic {
   approvedBy            User?                  @relation("TopicApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   topicRegistrations    TopicRegistration[]
   supervisorAssignments SupervisorAssignment[]
+  outlines              Outline[]
+  projectProgresses     ProjectProgress[]
 
   @@map("topics")
 }
@@ -318,6 +354,7 @@ model TopicRegistration {
   requestedSupervisor Lecturer?             @relation(fields: [requestedSupervisorId], references: [id], onDelete: SetNull)
   confirmedBy         User?                 @relation("RegistrationConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
   supervisorAssignment SupervisorAssignment?
+  outline              Outline?
 
   @@index([studentId, projectPeriodId])
   @@index([status])
@@ -344,10 +381,139 @@ model SupervisorAssignment {
   projectPeriod     ProjectPeriod     @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
   supervisor        Lecturer          @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
   assignedBy        User              @relation("SupervisorAssignmentAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+  outlines          Outline[]
+  projectProgresses ProjectProgress[]
 
   @@unique([studentId, projectPeriodId])
   @@index([supervisorId])
   @@map("supervisor_assignments")
+}
+
+model Outline {
+  id                     String        @id @default(uuid())
+  topicRegistrationId    String        @unique
+  supervisorAssignmentId String
+  studentId              String
+  supervisorId           String
+  projectPeriodId        String
+  title                  String
+  summary                String
+  objectives             String?
+  methodology            String?
+  expectedOutput         String?
+  timeline               String?
+  status                 OutlineStatus @default(SUBMITTED)
+  currentVersion         Int           @default(1)
+  submittedAt            DateTime      @default(now())
+  reviewedAt             DateTime?
+  reviewedById           String?
+  feedback               String?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  topicRegistration    TopicRegistration    @relation(fields: [topicRegistrationId], references: [id], onDelete: Cascade)
+  supervisorAssignment SupervisorAssignment @relation(fields: [supervisorAssignmentId], references: [id], onDelete: Cascade)
+  student              Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor           Lecturer             @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  projectPeriod        ProjectPeriod        @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  reviewedBy           User?                @relation("OutlineReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  versions             OutlineVersion[]
+
+  @@index([studentId])
+  @@index([supervisorId])
+  @@index([status])
+  @@map("outlines")
+}
+
+model OutlineVersion {
+  id             String   @id @default(uuid())
+  outlineId      String
+  versionNumber  Int
+  title          String
+  summary        String
+  objectives     String?
+  methodology    String?
+  expectedOutput String?
+  timeline       String?
+  fileDocumentId String?
+  submitNote     String?
+  submittedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  outline      Outline       @relation(fields: [outlineId], references: [id], onDelete: Cascade)
+  fileDocument FileDocument? @relation("OutlineVersionFile", fields: [fileDocumentId], references: [id], onDelete: SetNull)
+
+  @@unique([outlineId, versionNumber])
+  @@map("outline_versions")
+}
+
+model ProjectProgress {
+  id                     String                @id @default(uuid())
+  studentId              String
+  supervisorId           String
+  supervisorAssignmentId String
+  projectPeriodId        String
+  title                  String
+  content                String
+  progressPercent        Int?
+  status                 ProjectProgressStatus @default(SUBMITTED)
+  fileDocumentId         String?
+  submittedAt            DateTime              @default(now())
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  student              Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  supervisor           Lecturer             @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  supervisorAssignment SupervisorAssignment @relation(fields: [supervisorAssignmentId], references: [id], onDelete: Cascade)
+  projectPeriod        ProjectPeriod        @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  fileDocument         FileDocument?        @relation("ProjectProgressFile", fields: [fileDocumentId], references: [id], onDelete: SetNull)
+  comments             ProjectProgressComment[]
+
+  @@index([studentId])
+  @@index([supervisorId])
+  @@index([supervisorAssignmentId])
+  @@map("project_progress")
+}
+
+model ProjectProgressComment {
+  id          String   @id @default(uuid())
+  progressId  String
+  commenterId String
+  comment     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  progress  ProjectProgress @relation(fields: [progressId], references: [id], onDelete: Cascade)
+  commenter User            @relation("ProgressCommenter", fields: [commenterId], references: [id], onDelete: Cascade)
+
+  @@index([progressId])
+  @@map("project_progress_comments")
+}
+
+model FileDocument {
+  id           String           @id @default(uuid())
+  ownerId      String
+  originalName String
+  storedName   String
+  bucket       String
+  objectKey    String
+  mimeType     String
+  size         Int
+  fileType     FileDocumentType @default(OTHER)
+  relatedType  String?
+  relatedId    String?
+  uploadedById String
+  createdAt    DateTime         @default(now())
+  deletedAt    DateTime?
+
+  owner                User              @relation("FileOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  uploadedBy           User              @relation("FileUploader", fields: [uploadedById], references: [id], onDelete: Cascade)
+  outlineVersions      OutlineVersion[]  @relation("OutlineVersionFile")
+  projectProgressItems ProjectProgress[] @relation("ProjectProgressFile")
+
+  @@index([ownerId])
+  @@index([relatedType, relatedId])
+  @@map("file_documents")
 }
 
 model Notification {

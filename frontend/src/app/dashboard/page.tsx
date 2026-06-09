@@ -126,6 +126,22 @@ export default function DashboardPage() {
             </Link>
           )}
 
+          {isStudent && (
+            <Link href="/student/outline" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Nộp đề cương</h2>
+              <p className="mt-2 text-slate-600">Nộp, xem trạng thái và nộp lại đề cương nếu GVHD yêu cầu sửa.</p>
+            </Link>
+          )}
+
+          {isStudent && (
+            <Link href="/student/progress" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CheckSquare className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Cập nhật tiến độ</h2>
+              <p className="mt-2 text-slate-600">Cập nhật tiến độ và xem góp ý của GVHD sau khi đề cương được duyệt.</p>
+            </Link>
+          )}
+
           {isSupervisor && (
             <Link href="/supervisor/registration-requests" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
               <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
@@ -139,6 +155,22 @@ export default function DashboardPage() {
               <Users className="mb-4 h-7 w-7 text-slate-800" />
               <h2 className="text-xl font-bold text-slate-950">Sinh viên tôi hướng dẫn</h2>
               <p className="mt-2 text-slate-600">Danh sách sinh viên đã được phân công chính thức.</p>
+            </Link>
+          )}
+
+          {isSupervisor && (
+            <Link href="/supervisor/outlines" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Duyệt đề cương</h2>
+              <p className="mt-2 text-slate-600">Xem, duyệt hoặc yêu cầu sinh viên chỉnh sửa đề cương.</p>
+            </Link>
+          )}
+
+          {isSupervisor && (
+            <Link href="/supervisor/progress" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CheckSquare className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Theo dõi tiến độ</h2>
+              <p className="mt-2 text-slate-600">Theo dõi và góp ý tiến độ đồ án của sinh viên.</p>
             </Link>
           )}
 
@@ -167,7 +199,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Đăng ký đề tài, đề cương, bảo vệ và lưu trữ sẽ được triển khai ở sprint sau.</p>
+            <p className="mt-2 text-slate-600">Đăng ký bảo vệ, phản biện, hội đồng, chấm điểm và lưu trữ sẽ được triển khai ở sprint sau.</p>
           </div>
         </div>
       </div>

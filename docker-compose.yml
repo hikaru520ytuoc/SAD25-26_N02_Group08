@@ -58,6 +58,13 @@ services:
       JWT_SECRET: change-me-in-production
       JWT_EXPIRES_IN: 1d
       BCRYPT_SALT_ROUNDS: 10
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+      MINIO_BUCKET: graduation-project-files
+      MAX_FILE_SIZE_MB: 20
+      ALLOWED_FILE_TYPES: application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/zip,application/x-zip-compressed
     ports:
       - "8080:8080"
     depends_on:
@@ -79,6 +86,8 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
       NEXT_PUBLIC_APP_NAME: Graduation Project Management
+      NEXT_PUBLIC_MAX_FILE_SIZE_MB: 20
+      NEXT_PUBLIC_ALLOWED_FILE_TYPES: .pdf,.doc,.docx,.zip
     ports:
       - "3000:3000"
     depends_on:
