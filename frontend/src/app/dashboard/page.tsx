@@ -1,6 +1,6 @@
 'use client';
 
-import { BookOpen, CalendarDays, CheckSquare, FileText, LogOut, Shield, Users } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, CheckSquare, FileText, LogOut, Shield, UserCheck, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -111,12 +111,58 @@ export default function DashboardPage() {
           )}
 
           {isStudent && (
-            <Link href="/topics" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+            <Link href="/student/topic-registration" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
               <BookOpen className="mb-4 h-7 w-7 text-slate-800" />
-              <h2 className="text-xl font-bold text-slate-950">Danh sách đề tài công bố</h2>
-              <p className="mt-2 text-slate-600">Xem đề tài đã được duyệt và công bố.</p>
+              <h2 className="text-xl font-bold text-slate-950">Đăng ký đề tài</h2>
+              <p className="mt-2 text-slate-600">Đăng ký đề tài có sẵn hoặc đề xuất đề tài mới.</p>
             </Link>
           )}
+
+          {isStudent && (
+            <Link href="/student/supervisor-assignment" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">GVHD chính thức</h2>
+              <p className="mt-2 text-slate-600">Xem giảng viên hướng dẫn sau khi Khoa xác nhận.</p>
+            </Link>
+          )}
+
+          {isSupervisor && (
+            <Link href="/supervisor/registration-requests" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Yêu cầu hướng dẫn</h2>
+              <p className="mt-2 text-slate-600">Đồng ý hoặc từ chối yêu cầu hướng dẫn của sinh viên.</p>
+            </Link>
+          )}
+
+          {isSupervisor && (
+            <Link href="/supervisor/my-students" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Users className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Sinh viên tôi hướng dẫn</h2>
+              <p className="mt-2 text-slate-600">Danh sách sinh viên đã được phân công chính thức.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/topic-registrations" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <UserCheck className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Xử lý đăng ký đề tài</h2>
+              <p className="mt-2 text-slate-600">Phân công GVHD, xác nhận hoặc từ chối đăng ký.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/supervisor-assignments" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Users className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Phân công GVHD</h2>
+              <p className="mt-2 text-slate-600">Theo dõi các phân công GVHD chính thức.</p>
+            </Link>
+          )}
+
+          <Link href="/notifications" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+            <Bell className="mb-4 h-7 w-7 text-slate-800" />
+            <h2 className="text-xl font-bold text-slate-950">Thông báo</h2>
+            <p className="mt-2 text-slate-600">Xem notification cơ bản của hệ thống.</p>
+          </Link>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />

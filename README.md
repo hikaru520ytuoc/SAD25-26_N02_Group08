@@ -440,3 +440,72 @@ docker compose run --rm backend npx prisma migrate deploy
 docker compose run --rm backend npm run prisma:seed
 docker compose up -d --build
 ```
+
+---
+
+# Sprint 3 - Topic Registration and Supervisor Assignment
+
+## Scope
+Sprint 3 triển khai Phase 2 của Giai đoạn 1: đăng ký và xét duyệt đề tài.
+
+Included:
+- Student register existing published topic.
+- Student propose new topic.
+- Student request supervisor.
+- Supervisor accept/reject request.
+- Faculty assign supervisor.
+- Faculty confirm official topic and supervisor.
+- Faculty reject registration/proposal.
+- Supervisor assignment lookup.
+- Basic notification.
+- Audit log for important actions.
+
+Not included:
+- Outline submission.
+- Project progress.
+- Defense registration.
+- Reviewer/council/scoring/archive modules.
+
+## Run Sprint 3
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+## Verify
+
+```bash
+docker compose ps
+curl http://localhost:8080/api/health
+```
+
+## Sprint 3 pages
+
+```text
+/student/topic-registration
+/supervisor/registration-requests
+/faculty/topic-registrations
+/faculty/supervisor-assignments
+/supervisor/my-students
+/student/supervisor-assignment
+/notifications
+```
+
+## Sprint 3 demo accounts
+
+```text
+Student:          student@example.com / Student@123456
+Supervisor 1:     supervisor@example.com / Supervisor@123456
+Supervisor 2:     supervisor2@example.com / Supervisor2@123456
+Faculty Manager:  faculty@example.com / Faculty@123456
+```

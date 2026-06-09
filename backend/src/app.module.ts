@@ -8,6 +8,9 @@ import { UsersModule } from './modules/users/users.module';
 import { ProjectPeriodsModule } from './modules/project-periods/project-periods.module';
 import { StudentEligibilitiesModule } from './modules/student-eligibilities/student-eligibilities.module';
 import { TopicsModule } from './modules/topics/topics.module';
+import { TopicRegistrationsModule } from './modules/topic-registrations/topic-registrations.module';
+import { SupervisorAssignmentsModule } from './modules/supervisor-assignments/supervisor-assignments.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -25,6 +28,9 @@ import { PrismaModule } from './prisma/prisma.module';
     ProjectPeriodsModule,
     StudentEligibilitiesModule,
     TopicsModule,
+    TopicRegistrationsModule,
+    SupervisorAssignmentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

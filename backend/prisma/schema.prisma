@@ -52,6 +52,45 @@ enum TopicStatus {
   CLOSED
 }
 
+enum TopicSource {
+  SUPERVISOR_PROPOSED
+  STUDENT_PROPOSED
+}
+
+enum TopicRegistrationType {
+  EXISTING_TOPIC
+  STUDENT_PROPOSED
+}
+
+enum SupervisorResponseStatus {
+  NOT_REQUIRED
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum TopicRegistrationStatus {
+  DRAFT
+  PENDING_SUPERVISOR
+  PENDING_FACULTY
+  NEEDS_REVISION
+  FACULTY_APPROVED
+  FACULTY_REJECTED
+  CANCELLED
+  OFFICIALLY_ASSIGNED
+}
+
+enum SupervisorAssignmentType {
+  TOPIC_OWNER
+  STUDENT_REQUESTED
+  FACULTY_ASSIGNED
+}
+
+enum SupervisorAssignmentStatus {
+  ACTIVE
+  CANCELLED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -71,6 +110,9 @@ model User {
   createdProjectPeriods ProjectPeriod[] @relation("ProjectPeriodCreator")
   checkedEligibilities   StudentEligibility[] @relation("EligibilityChecker")
   approvedTopics         Topic[] @relation("TopicApprover")
+  confirmedRegistrations TopicRegistration[] @relation("RegistrationConfirmer")
+  assignedSupervisors    SupervisorAssignment[] @relation("SupervisorAssignmentAssigner")
+  notifications          Notification[]
 
   @@map("users")
 }
@@ -144,9 +186,12 @@ model Student {
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 
-  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  faculty       Faculty?             @relation(fields: [facultyId], references: [id], onDelete: SetNull)
-  eligibilities StudentEligibility[]
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty               Faculty?               @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  eligibilities         StudentEligibility[]
+  topicRegistrations    TopicRegistration[]
+  supervisorAssignments SupervisorAssignment[]
+  proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
 }
@@ -162,9 +207,11 @@ model Lecturer {
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  faculty Faculty? @relation(fields: [facultyId], references: [id], onDelete: SetNull)
-  topics  Topic[]
+  user                         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  faculty                      Faculty?               @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  topics                       Topic[]
+  requestedTopicRegistrations  TopicRegistration[]
+  supervisorAssignments        SupervisorAssignment[]
 
   @@map("lecturers")
 }
@@ -183,9 +230,11 @@ model ProjectPeriod {
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
-  createdBy     User                 @relation("ProjectPeriodCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  eligibilities StudentEligibility[]
-  topics        Topic[]
+  createdBy             User                   @relation("ProjectPeriodCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  eligibilities         StudentEligibility[]
+  topics                Topic[]
+  topicRegistrations    TopicRegistration[]
+  supervisorAssignments SupervisorAssignment[]
 
   @@map("project_periods")
 }
@@ -212,26 +261,107 @@ model StudentEligibility {
 }
 
 model Topic {
-  id             String      @id @default(uuid())
-  title          String
-  description    String
-  objectives     String?
-  expectedOutput String?
-  major          String?
-  maxStudents    Int         @default(1)
-  supervisorId   String
-  projectPeriodId String
-  status         TopicStatus @default(DRAFT)
-  rejectionReason String?
-  approvedById   String?
-  approvedAt     DateTime?
-  publishedAt    DateTime?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  id                  String      @id @default(uuid())
+  title               String
+  description         String
+  objectives          String?
+  expectedOutput      String?
+  major               String?
+  maxStudents         Int         @default(1)
+  supervisorId        String
+  projectPeriodId     String
+  status              TopicStatus @default(DRAFT)
+  source              TopicSource @default(SUPERVISOR_PROPOSED)
+  proposedByStudentId String?
+  rejectionReason     String?
+  approvedById        String?
+  approvedAt          DateTime?
+  publishedAt         DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
 
-  supervisor    Lecturer      @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
-  projectPeriod ProjectPeriod @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
-  approvedBy    User?         @relation("TopicApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  supervisor            Lecturer               @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  projectPeriod         ProjectPeriod          @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  proposedByStudent     Student?               @relation("TopicProposedByStudent", fields: [proposedByStudentId], references: [id], onDelete: SetNull)
+  approvedBy            User?                  @relation("TopicApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  topicRegistrations    TopicRegistration[]
+  supervisorAssignments SupervisorAssignment[]
 
   @@map("topics")
+}
+
+model TopicRegistration {
+  id                       String                   @id @default(uuid())
+  studentId                String
+  projectPeriodId          String
+  registrationType         TopicRegistrationType
+  topicId                  String?
+  proposedTitle            String?
+  proposedDescription      String?
+  proposedObjectives       String?
+  proposedExpectedOutput   String?
+  proposedMajor            String?
+  requestedSupervisorId    String?
+  supervisorResponseStatus SupervisorResponseStatus @default(NOT_REQUIRED)
+  supervisorResponseNote   String?
+  status                   TopicRegistrationStatus  @default(DRAFT)
+  facultyNote              String?
+  rejectedReason           String?
+  confirmedById            String?
+  confirmedAt              DateTime?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+
+  student             Student               @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod         @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  topic               Topic?                @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  requestedSupervisor Lecturer?             @relation(fields: [requestedSupervisorId], references: [id], onDelete: SetNull)
+  confirmedBy         User?                 @relation("RegistrationConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+  supervisorAssignment SupervisorAssignment?
+
+  @@index([studentId, projectPeriodId])
+  @@index([status])
+  @@map("topic_registrations")
+}
+
+model SupervisorAssignment {
+  id                  String                     @id @default(uuid())
+  topicRegistrationId String                     @unique
+  studentId           String
+  topicId             String?
+  projectPeriodId     String
+  supervisorId        String
+  assignedById        String
+  assignmentType      SupervisorAssignmentType
+  status              SupervisorAssignmentStatus @default(ACTIVE)
+  assignedAt          DateTime                   @default(now())
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  topicRegistration TopicRegistration @relation(fields: [topicRegistrationId], references: [id], onDelete: Cascade)
+  student           Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic             Topic?            @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  projectPeriod     ProjectPeriod     @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  supervisor        Lecturer          @relation(fields: [supervisorId], references: [id], onDelete: Restrict)
+  assignedBy        User              @relation("SupervisorAssignmentAssigner", fields: [assignedById], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, projectPeriodId])
+  @@index([supervisorId])
+  @@map("supervisor_assignments")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
 }
