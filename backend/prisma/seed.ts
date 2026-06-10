@@ -4,6 +4,8 @@ import {
   DefenseCouncilStatus,
   DefenseRegistrationStatus,
   DefenseScheduleStatus,
+  FinalResultStatus,
+  ResultPublicationStatus,
   EligibilityStatus,
   InternshipStatus,
   OutlineStatus,
@@ -618,11 +620,120 @@ async function main() {
     },
   });
 
+
+  const defenseSchedule = await prisma.defenseSchedule.findUniqueOrThrow({
+    where: { defenseRegistrationId: readyDefenseRegistration.id },
+  });
+
+  await prisma.defenseDocument.upsert({
+    where: { defenseScheduleId: defenseSchedule.id },
+    update: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      studentId: student.id,
+      status: 'APPROVED',
+      secretaryId: users.COUNCIL_SECRETARY.id,
+      secretaryNote: 'Hồ sơ demo đã hợp lệ để chấm điểm Sprint 7',
+      reviewedAt: new Date(),
+    },
+    create: {
+      defenseScheduleId: defenseSchedule.id,
+      defenseRegistrationId: readyDefenseRegistration.id,
+      studentId: student.id,
+      status: 'APPROVED',
+      secretaryId: users.COUNCIL_SECRETARY.id,
+      secretaryNote: 'Hồ sơ demo đã hợp lệ để chấm điểm Sprint 7',
+      reviewedAt: new Date(),
+    },
+  });
+
+  const councilMembers = await prisma.councilMember.findMany({ where: { councilId: council.id } });
+  const seedScores = [8.0, 8.5, 9.0];
+  for (const [index, member] of councilMembers.entries()) {
+    await prisma.councilScore.upsert({
+      where: { defenseScheduleId_councilMemberId: { defenseScheduleId: defenseSchedule.id, councilMemberId: member.id } },
+      update: {
+        defenseRegistrationId: readyDefenseRegistration.id,
+        councilId: council.id,
+        lecturerId: member.lecturerId,
+        score: seedScores[index] ?? 8.0,
+        comment: 'Điểm hội đồng demo Sprint 7',
+        createdById: users.COUNCIL_SECRETARY.id,
+      },
+      create: {
+        defenseScheduleId: defenseSchedule.id,
+        defenseRegistrationId: readyDefenseRegistration.id,
+        councilId: council.id,
+        councilMemberId: member.id,
+        lecturerId: member.lecturerId,
+        score: seedScores[index] ?? 8.0,
+        comment: 'Điểm hội đồng demo Sprint 7',
+        createdById: users.COUNCIL_SECRETARY.id,
+      },
+    });
+  }
+
+  const supervisorScore = await prisma.supervisorScore.findUniqueOrThrow({ where: { defenseRegistrationId: readyDefenseRegistration.id } });
+  const reviewerScore = await prisma.reviewerScore.findUniqueOrThrow({ where: { reviewerAssignmentId: reviewerAssignment.id } });
+  const councilScores = await prisma.councilScore.findMany({ where: { defenseScheduleId: defenseSchedule.id } });
+  const councilAverageScore = Number((councilScores.reduce((sum, item) => sum + item.score, 0) / councilScores.length).toFixed(2));
+  const finalScore = Number(((councilAverageScore * 2 + supervisorScore.score + reviewerScore.score) / 4).toFixed(2));
+
+  await prisma.scoreSummary.upsert({
+    where: { defenseRegistrationId: readyDefenseRegistration.id },
+    update: {
+      defenseScheduleId: defenseSchedule.id,
+      supervisorScore: supervisorScore.score,
+      reviewerScore: reviewerScore.score,
+      councilAverageScore,
+      finalScore,
+      calculatedById: users.FACULTY_MANAGER.id,
+      calculatedAt: new Date(),
+    },
+    create: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      defenseScheduleId: defenseSchedule.id,
+      supervisorScore: supervisorScore.score,
+      reviewerScore: reviewerScore.score,
+      councilAverageScore,
+      finalScore,
+      calculatedById: users.FACULTY_MANAGER.id,
+    },
+  });
+
+  await prisma.finalResult.upsert({
+    where: { defenseRegistrationId: readyDefenseRegistration.id },
+    update: {
+      defenseScheduleId: defenseSchedule.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      supervisorScore: supervisorScore.score,
+      reviewerScore: reviewerScore.score,
+      councilAverageScore,
+      finalScore,
+      resultStatus: finalScore >= 5.5 ? FinalResultStatus.PASSED : FinalResultStatus.FAILED,
+      publicationStatus: ResultPublicationStatus.DRAFT,
+      revisionRequired: false,
+    },
+    create: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      defenseScheduleId: defenseSchedule.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      supervisorScore: supervisorScore.score,
+      reviewerScore: reviewerScore.score,
+      councilAverageScore,
+      finalScore,
+      resultStatus: finalScore >= 5.5 ? FinalResultStatus.PASSED : FinalResultStatus.FAILED,
+      publicationStatus: ResultPublicationStatus.DRAFT,
+      revisionRequired: false,
+    },
+  });
+
 }
 
 main()
   .then(async () => {
-    console.log('Seed completed: roles, demo users and Sprint 6 demo data are ready.');
+    console.log('Seed completed: roles, demo users and Sprint 7 demo data are ready.');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

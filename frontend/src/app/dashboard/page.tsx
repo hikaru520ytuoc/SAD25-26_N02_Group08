@@ -269,6 +269,39 @@ export default function DashboardPage() {
             </Link>
           )}
 
+
+          {isSecretary && (
+            <Link href="/secretary/council-scoring" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CheckSquare className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Nhập điểm hội đồng</h2>
+              <p className="mt-2 text-slate-600">Nhập điểm từng thành viên và tính điểm hội đồng trung bình.</p>
+            </Link>
+          )}
+
+          {isCouncil && (
+            <Link href="/council/my-scores" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <CheckSquare className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Điểm của tôi</h2>
+              <p className="mt-2 text-slate-600">Thành viên hội đồng nhập điểm của chính mình.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/results" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Shield className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Công bố kết quả</h2>
+              <p className="mt-2 text-slate-600">Tính điểm tổng kết, xác nhận và công bố kết quả bảo vệ.</p>
+            </Link>
+          )}
+
+          {isStudent && (
+            <Link href="/student/result" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Shield className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Kết quả bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Xem điểm tổng kết và trạng thái đạt/không đạt sau khi công bố.</p>
+            </Link>
+          )}
+
           <Link href="/notifications" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
             <Bell className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Thông báo</h2>
@@ -278,7 +311,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Hội đồng, lịch bảo vệ, nhập điểm hội đồng, tính điểm tổng kết, công bố kết quả và lưu trữ sẽ được triển khai ở Sprint 7–8.</p>
+            <p className="mt-2 text-slate-600">Chỉnh sửa sau bảo vệ, công bố hồ sơ cuối cùng và lưu trữ sẽ được triển khai ở Sprint 8.</p>
           </div>
         </div>
       </div>

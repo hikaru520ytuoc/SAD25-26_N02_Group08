@@ -168,6 +168,24 @@ enum DefenseDocumentStatus {
   APPROVED
 }
 
+enum FinalResultStatus {
+  PASSED
+  FAILED
+  PASSED_WITH_REVISION
+}
+
+enum ResultPublicationStatus {
+  DRAFT
+  CONFIRMED
+  PUBLISHED
+}
+
+enum DefenseSessionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -200,6 +218,11 @@ model User {
   createdDefenseSchedules DefenseSchedule[] @relation("DefenseScheduleCreator")
   councilMemberships     CouncilMember[]
   reviewedDefenseDocuments DefenseDocument[] @relation("DefenseDocumentSecretary")
+  createdCouncilScores CouncilScore[] @relation("CouncilScoreCreator")
+  calculatedScoreSummaries ScoreSummary[] @relation("ScoreSummaryCalculator")
+  confirmedFinalResults FinalResult[] @relation("FinalResultConfirmer")
+  publishedFinalResults FinalResult[] @relation("FinalResultPublisher")
+  createdDefenseSessions DefenseSession[] @relation("DefenseSessionCreator")
 
   @@map("users")
 }
@@ -285,6 +308,7 @@ model Student {
   reviewerAssignments  ReviewerAssignment[]
   defenseSchedules     DefenseSchedule[]
   defenseDocuments     DefenseDocument[]
+  finalResults         FinalResult[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -315,6 +339,7 @@ model Lecturer {
   supervisorScores SupervisorScore[]
   reviewerScores ReviewerScore[]
   councilMemberships CouncilMember[]
+  councilScores CouncilScore[]
 
   @@map("lecturers")
 }
@@ -344,6 +369,7 @@ model ProjectPeriod {
   reviewerAssignments   ReviewerAssignment[]
   defenseCouncils       DefenseCouncil[]
   defenseSchedules      DefenseSchedule[]
+  finalResults          FinalResult[]
 
   @@map("project_periods")
 }
@@ -635,6 +661,10 @@ model DefenseRegistration {
   supervisorScore          SupervisorScore?
   defenseSchedule          DefenseSchedule?
   defenseDocument          DefenseDocument?
+  councilScores            CouncilScore[]
+  scoreSummary             ScoreSummary?
+  finalResult              FinalResult?
+  defenseSession           DefenseSession?
 
   @@unique([studentId, projectPeriodId])
   @@index([supervisorId])
@@ -740,6 +770,8 @@ model DefenseCouncil {
   createdBy     User             @relation("DefenseCouncilCreator", fields: [createdById], references: [id], onDelete: Restrict)
   members       CouncilMember[]
   schedules     DefenseSchedule[]
+  councilScores CouncilScore[]
+  defenseSessions DefenseSession[]
 
   @@index([projectPeriodId])
   @@index([status])
@@ -758,6 +790,7 @@ model CouncilMember {
   council  DefenseCouncil @relation(fields: [councilId], references: [id], onDelete: Cascade)
   lecturer Lecturer       @relation(fields: [lecturerId], references: [id], onDelete: Restrict)
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  councilScores CouncilScore[]
 
   @@unique([councilId, lecturerId])
   @@index([userId])
@@ -786,6 +819,10 @@ model DefenseSchedule {
   council             DefenseCouncil      @relation(fields: [councilId], references: [id], onDelete: Restrict)
   createdBy           User                @relation("DefenseScheduleCreator", fields: [createdById], references: [id], onDelete: Restrict)
   defenseDocument     DefenseDocument?
+  councilScores       CouncilScore[]
+  scoreSummary        ScoreSummary?
+  finalResult         FinalResult?
+  defenseSession      DefenseSession?
 
   @@index([studentId])
   @@index([councilId])
@@ -821,6 +858,110 @@ model DefenseDocument {
   @@index([studentId])
   @@index([status])
   @@map("defense_documents")
+}
+
+
+model CouncilScore {
+  id                    String   @id @default(uuid())
+  defenseScheduleId     String
+  defenseRegistrationId String
+  councilId             String
+  councilMemberId       String
+  lecturerId            String
+  score                 Float
+  comment               String?
+  createdById           String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  defenseSchedule     DefenseSchedule      @relation(fields: [defenseScheduleId], references: [id], onDelete: Cascade)
+  defenseRegistration DefenseRegistration  @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  council             DefenseCouncil       @relation(fields: [councilId], references: [id], onDelete: Cascade)
+  councilMember       CouncilMember        @relation(fields: [councilMemberId], references: [id], onDelete: Cascade)
+  lecturer            Lecturer             @relation(fields: [lecturerId], references: [id], onDelete: Restrict)
+  createdBy           User                 @relation("CouncilScoreCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@unique([defenseScheduleId, councilMemberId])
+  @@index([defenseRegistrationId])
+  @@index([councilId])
+  @@map("council_scores")
+}
+
+model ScoreSummary {
+  id                    String   @id @default(uuid())
+  defenseRegistrationId String   @unique
+  defenseScheduleId     String   @unique
+  supervisorScore       Float
+  reviewerScore         Float
+  councilAverageScore   Float
+  finalScore            Float
+  calculatedById        String
+  calculatedAt          DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  defenseSchedule     DefenseSchedule     @relation(fields: [defenseScheduleId], references: [id], onDelete: Cascade)
+  calculatedBy        User                @relation("ScoreSummaryCalculator", fields: [calculatedById], references: [id], onDelete: Restrict)
+
+  @@map("score_summaries")
+}
+
+model FinalResult {
+  id                    String                  @id @default(uuid())
+  defenseRegistrationId String                  @unique
+  defenseScheduleId     String                  @unique
+  studentId             String
+  projectPeriodId       String
+  supervisorScore       Float
+  reviewerScore         Float
+  councilAverageScore   Float
+  finalScore            Float
+  resultStatus          FinalResultStatus
+  publicationStatus     ResultPublicationStatus @default(DRAFT)
+  revisionRequired      Boolean                 @default(false)
+  revisionNote          String?
+  confirmedById         String?
+  confirmedAt           DateTime?
+  publishedById         String?
+  publishedAt           DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  defenseSchedule     DefenseSchedule     @relation(fields: [defenseScheduleId], references: [id], onDelete: Cascade)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  confirmedBy         User?               @relation("FinalResultConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+  publishedBy         User?               @relation("FinalResultPublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+
+  @@index([studentId])
+  @@index([publicationStatus])
+  @@index([resultStatus])
+  @@map("final_results")
+}
+
+model DefenseSession {
+  id                    String               @id @default(uuid())
+  defenseScheduleId     String               @unique
+  defenseRegistrationId String               @unique
+  councilId             String
+  sessionStatus         DefenseSessionStatus @default(NOT_STARTED)
+  generalComment        String?
+  conclusion            String?
+  revisionRequired      Boolean              @default(false)
+  revisionNote          String?
+  createdById           String
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  defenseSchedule     DefenseSchedule     @relation(fields: [defenseScheduleId], references: [id], onDelete: Cascade)
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  council             DefenseCouncil      @relation(fields: [councilId], references: [id], onDelete: Cascade)
+  createdBy           User                @relation("DefenseSessionCreator", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([councilId])
+  @@map("defense_sessions")
 }
 
 model Notification {

@@ -20,6 +20,8 @@ import { ScoresModule } from './modules/scores/scores.module';
 import { CouncilsModule } from './modules/councils/councils.module';
 import { DefenseSchedulesModule } from './modules/defense-schedules/defense-schedules.module';
 import { DefenseDocumentsModule } from './modules/defense-documents/defense-documents.module';
+import { ResultsModule } from './modules/results/results.module';
+import { DefenseSessionsModule } from './modules/defense-sessions/defense-sessions.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -49,6 +51,8 @@ import { PrismaModule } from './prisma/prisma.module';
     CouncilsModule,
     DefenseSchedulesModule,
     DefenseDocumentsModule,
+    ResultsModule,
+    DefenseSessionsModule,
   ],
 })
 export class AppModule {}

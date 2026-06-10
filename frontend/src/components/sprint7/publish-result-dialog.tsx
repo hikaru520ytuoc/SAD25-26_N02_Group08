@@ -1,0 +1,1 @@
+export function PublishResultDialog({ onPublish }: { onPublish: () => void }) { return <button onClick={onPublish} className="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white">Công bố kết quả</button>; }

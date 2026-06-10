@@ -1,0 +1,1 @@
+export function RevisionRequiredForm({ value, onChange }: { value: string; onChange: (value: string) => void }) { return <textarea value={value} onChange={(event) => onChange(event.target.value)} placeholder="Ghi chú chỉnh sửa" className="w-full rounded-xl border px-3 py-2 text-sm" />; }

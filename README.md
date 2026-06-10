@@ -332,3 +332,63 @@ Council Chair: council@example.com / Council@123456
 Council Secretary: secretary@example.com / Secretary@123456
 Admin: admin@example.com / Admin@123456
 ```
+
+---
+
+# Sprint 7 - Council Scoring and Final Result Publication
+
+Sprint 7 triển khai nghiệp vụ chấm điểm và công bố kết quả bảo vệ.
+
+## Scope
+
+- Nhập điểm từng thành viên hội đồng.
+- Tính điểm hội đồng trung bình.
+- Lấy điểm GVHD và GVPB từ Sprint 5.
+- Tính điểm tổng kết theo công thức `(councilAverageScore * 2 + supervisorScore + reviewerScore) / 4`.
+- Generate, confirm và publish final result.
+- Sinh viên xem kết quả sau khi được công bố.
+- Defense session/minutes cơ bản.
+- Notification và audit log cho thao tác quan trọng.
+
+## Out of scope
+
+- Quy trình chỉnh sửa sau bảo vệ.
+- Nộp bản chỉnh sửa.
+- Kiểm tra bản chỉnh sửa.
+- Lưu trữ hồ sơ.
+
+## Run
+
+```bash
+docker compose down -v
+
+docker compose build --no-cache backend frontend
+
+docker compose up -d postgres redis minio
+
+docker compose run --rm backend npx prisma migrate deploy
+
+docker compose run --rm backend npm run prisma:seed
+
+docker compose up -d --build
+```
+
+## Sprint 7 URLs
+
+- Secretary council scoring: `http://localhost:3000/secretary/council-scoring`
+- Council member scoring: `http://localhost:3000/council/my-scores`
+- Faculty results: `http://localhost:3000/faculty/results`
+- Student result: `http://localhost:3000/student/result`
+
+## Demo workflow
+
+1. Login `secretary@example.com` and enter council scores.
+2. Login `faculty@example.com`, generate result, confirm result, then publish result.
+3. Login `student@example.com` and view published result.
+
+## Demo accounts
+
+- secretary@example.com / Secretary@123456
+- council@example.com / Council@123456
+- faculty@example.com / Faculty@123456
+- student@example.com / Student@123456

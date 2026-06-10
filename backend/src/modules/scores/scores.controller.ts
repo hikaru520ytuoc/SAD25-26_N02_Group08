@@ -6,8 +6,10 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { successResponse } from '../../common/responses/api-response';
 import { AuthUser } from '../../common/types/auth-user.type';
+import { CreateCouncilScoreDto } from './dto/create-council-score.dto';
 import { CreateReviewerScoreDto } from './dto/create-reviewer-score.dto';
 import { CreateSupervisorScoreDto } from './dto/create-supervisor-score.dto';
+import { UpdateCouncilScoreDto } from './dto/update-council-score.dto';
 import { UpdateReviewerScoreDto } from './dto/update-reviewer-score.dto';
 import { UpdateSupervisorScoreDto } from './dto/update-supervisor-score.dto';
 import { ScoresService } from './scores.service';
@@ -54,5 +56,35 @@ export class ScoresController {
   @Roles('STUDENT', 'SUPERVISOR', 'REVIEWER', 'FACULTY_MANAGER', 'ADMIN')
   async getReviewerScore(@Param('reviewerAssignmentId', new ParseUUIDPipe({ version: '4' })) reviewerAssignmentId: string, @CurrentUser() actor: AuthUser) {
     return successResponse(await this.scoresService.getReviewerScore(reviewerAssignmentId, actor), 'Lấy điểm phản biện thành công');
+  }
+
+  @Get('council/:defenseScheduleId')
+  @Roles('COUNCIL_SECRETARY', 'COUNCIL_MEMBER', 'FACULTY_MANAGER', 'ADMIN')
+  async getCouncilScores(@Param('defenseScheduleId', new ParseUUIDPipe({ version: '4' })) defenseScheduleId: string, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.scoresService.listCouncilScores(defenseScheduleId, actor), 'Lấy điểm hội đồng thành công');
+  }
+
+  @Post('council')
+  @Roles('COUNCIL_SECRETARY', 'COUNCIL_MEMBER', 'ADMIN')
+  async createCouncilScore(@Body() dto: CreateCouncilScoreDto, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.scoresService.createCouncilScore(dto, actor), 'Lưu điểm hội đồng thành công');
+  }
+
+  @Patch('council/:id')
+  @Roles('COUNCIL_SECRETARY', 'COUNCIL_MEMBER', 'ADMIN')
+  async updateCouncilScore(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @Body() dto: UpdateCouncilScoreDto, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.scoresService.updateCouncilScore(id, dto, actor), 'Cập nhật điểm hội đồng thành công');
+  }
+
+  @Get('summary/:defenseRegistrationId')
+  @Roles('STUDENT', 'SUPERVISOR', 'REVIEWER', 'FACULTY_MANAGER', 'ADMIN')
+  async getScoreSummary(@Param('defenseRegistrationId', new ParseUUIDPipe({ version: '4' })) defenseRegistrationId: string, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.scoresService.getScoreSummary(defenseRegistrationId, actor), 'Lấy điểm tổng hợp thành công');
+  }
+
+  @Post('calculate/:defenseRegistrationId')
+  @Roles('FACULTY_MANAGER', 'ADMIN')
+  async calculateScoreSummary(@Param('defenseRegistrationId', new ParseUUIDPipe({ version: '4' })) defenseRegistrationId: string, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.scoresService.calculateScoreSummary(defenseRegistrationId, actor), 'Tính điểm tổng hợp thành công');
   }
 }
