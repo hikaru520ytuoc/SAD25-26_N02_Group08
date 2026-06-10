@@ -1,0 +1,67 @@
+export const WORKFLOW_TRANSITIONS = {
+  topic: {
+    DRAFT: ['SUBMITTED'],
+    SUBMITTED: ['APPROVED', 'REJECTED'],
+    APPROVED: ['PUBLISHED', 'CLOSED'],
+    REJECTED: ['SUBMITTED'],
+    PUBLISHED: ['CLOSED'],
+    CLOSED: [],
+  },
+  topicRegistration: {
+    PENDING_SUPERVISOR: ['PENDING_FACULTY', 'FACULTY_REJECTED', 'CANCELLED'],
+    PENDING_FACULTY: ['OFFICIALLY_ASSIGNED', 'FACULTY_REJECTED', 'CANCELLED'],
+    FACULTY_REJECTED: [],
+    OFFICIALLY_ASSIGNED: [],
+    CANCELLED: [],
+  },
+  outline: {
+    SUBMITTED: ['NEEDS_REVISION', 'APPROVED'],
+    NEEDS_REVISION: ['SUBMITTED'],
+    APPROVED: [],
+  },
+  defenseRegistration: {
+    SUBMITTED: ['NEEDS_REVISION', 'APPROVED_BY_SUPERVISOR'],
+    NEEDS_REVISION: ['SUBMITTED'],
+    APPROVED_BY_SUPERVISOR: ['SENT_TO_REVIEWER', 'APPROVED_BY_REVIEWER', 'READY_FOR_COUNCIL'],
+    SENT_TO_REVIEWER: ['REVIEWER_NEEDS_REVISION', 'APPROVED_BY_REVIEWER', 'READY_FOR_COUNCIL'],
+    REVIEWER_NEEDS_REVISION: ['SUBMITTED'],
+    APPROVED_BY_REVIEWER: ['READY_FOR_COUNCIL'],
+    READY_FOR_COUNCIL: [],
+  },
+  defenseSchedule: {
+    SCHEDULED: ['DOCUMENT_PENDING', 'CANCELLED'],
+    DOCUMENT_PENDING: ['DOCUMENT_NEEDS_SUPPLEMENT', 'DOCUMENT_APPROVED', 'CANCELLED'],
+    DOCUMENT_NEEDS_SUPPLEMENT: ['DOCUMENT_PENDING', 'DOCUMENT_APPROVED', 'CANCELLED'],
+    DOCUMENT_APPROVED: ['COMPLETED', 'CANCELLED'],
+    COMPLETED: [],
+    CANCELLED: [],
+  },
+  finalResultPublication: {
+    DRAFT: ['CONFIRMED'],
+    CONFIRMED: ['PUBLISHED'],
+    PUBLISHED: [],
+  },
+  revision: {
+    PENDING_SUBMISSION: ['SUBMITTED', 'CANCELLED'],
+    SUBMITTED: ['NEEDS_CHANGES', 'APPROVED'],
+    NEEDS_CHANGES: ['SUBMITTED', 'CANCELLED'],
+    APPROVED: [],
+    CANCELLED: [],
+  },
+  archive: {
+    NOT_SUBMITTED: ['SUBMITTED'],
+    SUBMITTED: ['NEEDS_SUPPLEMENT', 'APPROVED'],
+    NEEDS_SUPPLEMENT: ['SUBMITTED'],
+    APPROVED: ['COMPLETED'],
+    COMPLETED: ['LOCKED'],
+    LOCKED: [],
+  },
+} as const;
+
+export function isAllowedTransition<T extends string>(
+  transitions: Record<string, readonly string[]>,
+  currentStatus: T,
+  nextStatus: T,
+): boolean {
+  return transitions[currentStatus]?.includes(nextStatus) ?? false;
+}

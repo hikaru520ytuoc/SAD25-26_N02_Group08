@@ -344,7 +344,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Sprint 8 đã hoàn tất: chỉnh sửa sau bảo vệ, lưu trữ và khóa hồ sơ.</p>
+            <p className="mt-2 text-slate-600">Sprint 9 đã tích hợp tổng thể, ổn định MVP và sẵn sàng chuyển sang kiểm thử.</p>
           </div>
         </div>
       </div>
