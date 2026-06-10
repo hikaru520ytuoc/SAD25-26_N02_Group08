@@ -22,6 +22,9 @@ import { DefenseSchedulesModule } from './modules/defense-schedules/defense-sche
 import { DefenseDocumentsModule } from './modules/defense-documents/defense-documents.module';
 import { ResultsModule } from './modules/results/results.module';
 import { DefenseSessionsModule } from './modules/defense-sessions/defense-sessions.module';
+import { RevisionsModule } from './modules/revisions/revisions.module';
+import { ArchivesModule } from './modules/archives/archives.module';
+import { RecordLockModule } from './modules/record-lock/record-lock.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -53,6 +56,9 @@ import { PrismaModule } from './prisma/prisma.module';
     DefenseDocumentsModule,
     ResultsModule,
     DefenseSessionsModule,
+    RecordLockModule,
+    RevisionsModule,
+    ArchivesModule,
   ],
 })
 export class AppModule {}

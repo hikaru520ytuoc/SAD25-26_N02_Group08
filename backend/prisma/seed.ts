@@ -1,11 +1,13 @@
 import {
   AcademicStatus,
+  ArchiveRecordStatus,
   CouncilRole,
   DefenseCouncilStatus,
   DefenseRegistrationStatus,
   DefenseScheduleStatus,
   FinalResultStatus,
   ResultPublicationStatus,
+  RevisionRequestStatus,
   EligibilityStatus,
   InternshipStatus,
   OutlineStatus,
@@ -46,6 +48,7 @@ const demoUsers = [
   { email: 'reviewer@example.com', password: 'Reviewer@123456', fullName: 'Demo Reviewer', roleCode: 'REVIEWER' },
   { email: 'council@example.com', password: 'Council@123456', fullName: 'Demo Council Chair', roleCode: 'COUNCIL_MEMBER' },
   { email: 'secretary@example.com', password: 'Secretary@123456', fullName: 'Demo Council Secretary', roleCode: 'COUNCIL_SECRETARY' },
+  { email: 'archive@example.com', password: 'Archive@123456', fullName: 'Demo Archive Staff', roleCode: 'ARCHIVE_STAFF' },
 ];
 
 async function ensureDemoUser(email: string, password: string, fullName: string, roleCode: string) {
@@ -729,11 +732,73 @@ async function main() {
     },
   });
 
+
+  // Sprint 8 demo data: publish final result with revision requirement and create revision/archive demo records.
+  const sprint8Result = await prisma.finalResult.update({
+    where: { defenseRegistrationId: readyDefenseRegistration.id },
+    data: {
+      resultStatus: FinalResultStatus.PASSED_WITH_REVISION,
+      publicationStatus: ResultPublicationStatus.PUBLISHED,
+      revisionRequired: true,
+      revisionNote: 'Cần bổ sung minh chứng kiểm thử và hoàn thiện tài liệu hướng dẫn sử dụng.',
+      confirmedById: users.FACULTY_MANAGER.id,
+      confirmedAt: new Date(),
+      publishedById: users.FACULTY_MANAGER.id,
+      publishedAt: new Date(),
+    },
+  });
+
+  const revisionRequest = await prisma.revisionRequest.upsert({
+    where: { finalResultId: sprint8Result.id },
+    update: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      defenseScheduleId: defenseSchedule.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      requestedById: users.COUNCIL_SECRETARY.id,
+      title: 'Yêu cầu chỉnh sửa sau bảo vệ',
+      description: 'Bổ sung minh chứng kiểm thử, cập nhật tài liệu triển khai và hoàn thiện báo cáo cuối cùng.',
+      status: RevisionRequestStatus.PENDING_SUBMISSION,
+      dueDate: new Date('2026-02-15T00:00:00.000Z'),
+    },
+    create: {
+      finalResultId: sprint8Result.id,
+      defenseRegistrationId: readyDefenseRegistration.id,
+      defenseScheduleId: defenseSchedule.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      requestedById: users.COUNCIL_SECRETARY.id,
+      title: 'Yêu cầu chỉnh sửa sau bảo vệ',
+      description: 'Bổ sung minh chứng kiểm thử, cập nhật tài liệu triển khai và hoàn thiện báo cáo cuối cùng.',
+      status: RevisionRequestStatus.PENDING_SUBMISSION,
+      dueDate: new Date('2026-02-15T00:00:00.000Z'),
+    },
+  });
+
+  await prisma.archiveRecord.upsert({
+    where: { finalResultId: sprint8Result.id },
+    update: {
+      defenseRegistrationId: readyDefenseRegistration.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      revisionRequestId: revisionRequest.id,
+      status: ArchiveRecordStatus.NOT_SUBMITTED,
+    },
+    create: {
+      finalResultId: sprint8Result.id,
+      defenseRegistrationId: readyDefenseRegistration.id,
+      studentId: student.id,
+      projectPeriodId: period.id,
+      revisionRequestId: revisionRequest.id,
+      status: ArchiveRecordStatus.NOT_SUBMITTED,
+    },
+  });
+
 }
 
 main()
   .then(async () => {
-    console.log('Seed completed: roles, demo users and Sprint 7 demo data are ready.');
+    console.log('Seed completed: roles, demo users and Sprint 8 demo data are ready.');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

@@ -1,12 +1,12 @@
-feat(sprint-7): implement council scoring and final result publication
+feat(sprint-8): implement post-defense revision archive and record locking
 
-- Add Prisma schema and migration for council scores, score summaries, final results and defense sessions
-- Extend scoring module with council score management and score summary calculation
-- Add final result module with generate, confirm and publish workflow
-- Add defense session module for basic defense minutes and revision note capture
-- Add RBAC and ownership checks for council secretary, council member, faculty manager and student result access
-- Add notification and audit log events for council scoring and result publication
-- Add Sprint 7 seed data for council scores, score summary and draft final result
-- Add frontend secretary council scoring page and council member score page
-- Add frontend faculty result publication page and student result page
-- Update dashboard links, README, run guide and Sprint 7 test cases
+- Add Prisma schema and migration for revision requests, revision submissions, archive records and project record locks
+- Add revision module for post-defense revision requests, student submissions and review workflow
+- Add archive module for final archive submission, supplement request, approval, completion and locking
+- Add record lock service to block updates after archive completion
+- Extend file document types for revision reports, final reports, final slides, source code and archive documents
+- Add notification and audit log events for revision, archive and record locking actions
+- Add Sprint 8 seed data for archive staff, revision request and archive record demo
+- Add frontend student revision and archive pages
+- Add frontend faculty revision review and archive staff review pages
+- Update dashboard links, README, run guide and Sprint 8 test cases

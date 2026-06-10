@@ -113,6 +113,13 @@ enum FileDocumentType {
   DEFENSE_SLIDE_FINAL
   DEFENSE_SUPPLEMENT
   DEFENSE_OTHER_DOCUMENT
+  REVISION_REPORT
+  FINAL_REPORT
+  FINAL_SLIDE
+  SOURCE_CODE
+  ARCHIVE_DOCUMENT
+  ARCHIVE_SUPPLEMENT
+  ARCHIVE_OTHER
   REVISION
   ARCHIVE
   OTHER
@@ -186,6 +193,28 @@ enum DefenseSessionStatus {
   COMPLETED
 }
 
+enum RevisionRequestStatus {
+  PENDING_SUBMISSION
+  SUBMITTED
+  NEEDS_CHANGES
+  APPROVED
+  CANCELLED
+}
+
+enum RevisionSubmissionStatus {
+  SUBMITTED
+  REVIEWED
+}
+
+enum ArchiveRecordStatus {
+  NOT_SUBMITTED
+  SUBMITTED
+  NEEDS_SUPPLEMENT
+  APPROVED
+  COMPLETED
+  LOCKED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -223,6 +252,10 @@ model User {
   confirmedFinalResults FinalResult[] @relation("FinalResultConfirmer")
   publishedFinalResults FinalResult[] @relation("FinalResultPublisher")
   createdDefenseSessions DefenseSession[] @relation("DefenseSessionCreator")
+  requestedRevisions RevisionRequest[] @relation("RevisionRequester")
+  approvedRevisions RevisionRequest[] @relation("RevisionApprover")
+  archiveStaffRecords ArchiveRecord[] @relation("ArchiveStaff")
+  lockedProjectRecords ProjectRecordLock[] @relation("ProjectRecordLocker")
 
   @@map("users")
 }
@@ -309,6 +342,10 @@ model Student {
   defenseSchedules     DefenseSchedule[]
   defenseDocuments     DefenseDocument[]
   finalResults         FinalResult[]
+  revisionRequests     RevisionRequest[]
+  revisionSubmissions  RevisionSubmission[]
+  archiveRecords       ArchiveRecord[]
+  projectRecordLocks   ProjectRecordLock[]
   proposedTopics        Topic[]                @relation("TopicProposedByStudent")
 
   @@map("students")
@@ -370,6 +407,9 @@ model ProjectPeriod {
   defenseCouncils       DefenseCouncil[]
   defenseSchedules      DefenseSchedule[]
   finalResults          FinalResult[]
+  revisionRequests      RevisionRequest[]
+  archiveRecords        ArchiveRecord[]
+  projectRecordLocks    ProjectRecordLock[]
 
   @@map("project_periods")
 }
@@ -617,6 +657,11 @@ model FileDocument {
   defenseDocumentReports DefenseDocument[] @relation("DefenseDocumentReportFile")
   defenseDocumentSlides DefenseDocument[] @relation("DefenseDocumentSlideFile")
   defenseDocumentAdditional DefenseDocument[] @relation("DefenseDocumentAdditionalFile")
+  revisionSubmissions RevisionSubmission[] @relation("RevisionSubmissionReportFile")
+  archiveFinalReports ArchiveRecord[] @relation("ArchiveFinalReportFile")
+  archiveFinalSlides ArchiveRecord[] @relation("ArchiveFinalSlideFile")
+  archiveSourceCodes ArchiveRecord[] @relation("ArchiveSourceCodeFile")
+  archiveAdditionalDocuments ArchiveRecord[] @relation("ArchiveAdditionalDocumentFile")
 
   @@index([ownerId])
   @@index([relatedType, relatedId])
@@ -665,6 +710,8 @@ model DefenseRegistration {
   scoreSummary             ScoreSummary?
   finalResult              FinalResult?
   defenseSession           DefenseSession?
+  revisionRequests         RevisionRequest[]
+  archiveRecords           ArchiveRecord[]
 
   @@unique([studentId, projectPeriodId])
   @@index([supervisorId])
@@ -823,6 +870,7 @@ model DefenseSchedule {
   scoreSummary        ScoreSummary?
   finalResult         FinalResult?
   defenseSession      DefenseSession?
+  revisionRequests    RevisionRequest[]
 
   @@index([studentId])
   @@index([councilId])
@@ -934,6 +982,9 @@ model FinalResult {
   projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
   confirmedBy         User?               @relation("FinalResultConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
   publishedBy         User?               @relation("FinalResultPublisher", fields: [publishedById], references: [id], onDelete: SetNull)
+  revisionRequest     RevisionRequest?
+  archiveRecord       ArchiveRecord?
+  projectRecordLock   ProjectRecordLock?
 
   @@index([studentId])
   @@index([publicationStatus])
@@ -962,6 +1013,121 @@ model DefenseSession {
 
   @@index([councilId])
   @@map("defense_sessions")
+}
+
+
+model RevisionRequest {
+  id                    String                @id @default(uuid())
+  finalResultId          String                @unique
+  defenseRegistrationId  String
+  defenseScheduleId      String?
+  studentId              String
+  projectPeriodId        String
+  requestedById          String
+  title                  String
+  description            String
+  status                 RevisionRequestStatus @default(PENDING_SUBMISSION)
+  dueDate                DateTime?
+  approvedById           String?
+  approvedAt             DateTime?
+  feedback               String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+
+  finalResult         FinalResult         @relation(fields: [finalResultId], references: [id], onDelete: Cascade)
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  defenseSchedule     DefenseSchedule?    @relation(fields: [defenseScheduleId], references: [id], onDelete: SetNull)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  requestedBy         User                @relation("RevisionRequester", fields: [requestedById], references: [id], onDelete: Restrict)
+  approvedBy          User?               @relation("RevisionApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  submissions         RevisionSubmission[]
+  archiveRecord       ArchiveRecord?
+
+  @@index([studentId])
+  @@index([status])
+  @@map("revision_requests")
+}
+
+model RevisionSubmission {
+  id                 String                   @id @default(uuid())
+  revisionRequestId  String
+  studentId           String
+  versionNumber       Int
+  reportFileId        String?
+  note                String?
+  status              RevisionSubmissionStatus @default(SUBMITTED)
+  submittedAt         DateTime                 @default(now())
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+
+  revisionRequest RevisionRequest @relation(fields: [revisionRequestId], references: [id], onDelete: Cascade)
+  student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reportFile      FileDocument?   @relation("RevisionSubmissionReportFile", fields: [reportFileId], references: [id], onDelete: SetNull)
+
+  @@unique([revisionRequestId, versionNumber])
+  @@index([studentId])
+  @@map("revision_submissions")
+}
+
+model ArchiveRecord {
+  id                       String              @id @default(uuid())
+  finalResultId             String              @unique
+  defenseRegistrationId     String
+  studentId                 String
+  projectPeriodId           String
+  revisionRequestId         String?             @unique
+  finalReportFileId         String?
+  finalSlideFileId          String?
+  sourceCodeFileId          String?
+  additionalDocumentFileId  String?
+  status                    ArchiveRecordStatus @default(NOT_SUBMITTED)
+  archiveStaffId            String?
+  archiveNote               String?
+  supplementReason          String?
+  submittedAt               DateTime?
+  approvedAt                DateTime?
+  completedAt               DateTime?
+  lockedAt                  DateTime?
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+
+  finalResult         FinalResult         @relation(fields: [finalResultId], references: [id], onDelete: Cascade)
+  defenseRegistration DefenseRegistration @relation(fields: [defenseRegistrationId], references: [id], onDelete: Cascade)
+  student             Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod       ProjectPeriod       @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  revisionRequest     RevisionRequest?    @relation(fields: [revisionRequestId], references: [id], onDelete: SetNull)
+  archiveStaff        User?               @relation("ArchiveStaff", fields: [archiveStaffId], references: [id], onDelete: SetNull)
+  finalReportFile     FileDocument?       @relation("ArchiveFinalReportFile", fields: [finalReportFileId], references: [id], onDelete: SetNull)
+  finalSlideFile      FileDocument?       @relation("ArchiveFinalSlideFile", fields: [finalSlideFileId], references: [id], onDelete: SetNull)
+  sourceCodeFile      FileDocument?       @relation("ArchiveSourceCodeFile", fields: [sourceCodeFileId], references: [id], onDelete: SetNull)
+  additionalDocumentFile FileDocument?    @relation("ArchiveAdditionalDocumentFile", fields: [additionalDocumentFileId], references: [id], onDelete: SetNull)
+  projectRecordLock   ProjectRecordLock?
+
+  @@index([studentId])
+  @@index([status])
+  @@map("archive_records")
+}
+
+model ProjectRecordLock {
+  id              String   @id @default(uuid())
+  studentId       String
+  projectPeriodId String
+  finalResultId   String   @unique
+  archiveRecordId String   @unique
+  lockedById      String
+  reason          String
+  lockedAt        DateTime @default(now())
+  createdAt       DateTime @default(now())
+
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  projectPeriod ProjectPeriod @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
+  finalResult   FinalResult   @relation(fields: [finalResultId], references: [id], onDelete: Cascade)
+  archiveRecord ArchiveRecord @relation(fields: [archiveRecordId], references: [id], onDelete: Cascade)
+  lockedBy      User          @relation("ProjectRecordLocker", fields: [lockedById], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, projectPeriodId])
+  @@map("project_record_locks")
 }
 
 model Notification {

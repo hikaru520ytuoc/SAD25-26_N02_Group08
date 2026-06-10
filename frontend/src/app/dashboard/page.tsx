@@ -49,6 +49,7 @@ export default function DashboardPage() {
   const isReviewer = user.roles.includes('REVIEWER') || isAdmin;
   const isCouncil = user.roles.includes('COUNCIL_MEMBER') || user.roles.includes('COUNCIL_SECRETARY') || isAdmin;
   const isSecretary = user.roles.includes('COUNCIL_SECRETARY') || isAdmin;
+  const isArchiveStaff = user.roles.includes('ARCHIVE_STAFF') || isAdmin;
 
   return (
     <AppShell>
@@ -302,6 +303,38 @@ export default function DashboardPage() {
             </Link>
           )}
 
+          {isStudent && (
+            <Link href="/student/revision" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Chỉnh sửa sau bảo vệ</h2>
+              <p className="mt-2 text-slate-600">Xem yêu cầu chỉnh sửa và nộp bản chỉnh sửa sau bảo vệ.</p>
+            </Link>
+          )}
+
+          {isFaculty && (
+            <Link href="/faculty/revisions" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <FileText className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Duyệt bản chỉnh sửa</h2>
+              <p className="mt-2 text-slate-600">Theo dõi và duyệt các bản chỉnh sửa sau bảo vệ.</p>
+            </Link>
+          )}
+
+          {isStudent && (
+            <Link href="/student/archive" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Shield className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Hồ sơ lưu trữ</h2>
+              <p className="mt-2 text-slate-600">Nộp hồ sơ lưu trữ cuối cùng và xem trạng thái khóa hồ sơ.</p>
+            </Link>
+          )}
+
+          {isArchiveStaff && (
+            <Link href="/archive/records" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
+              <Shield className="mb-4 h-7 w-7 text-slate-800" />
+              <h2 className="text-xl font-bold text-slate-950">Kiểm tra lưu trữ</h2>
+              <p className="mt-2 text-slate-600">Duyệt, hoàn tất và khóa hồ sơ sau khi lưu trữ.</p>
+            </Link>
+          )}
+
           <Link href="/notifications" className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-md">
             <Bell className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Thông báo</h2>
@@ -311,7 +344,7 @@ export default function DashboardPage() {
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <Shield className="mb-4 h-7 w-7 text-slate-800" />
             <h2 className="text-xl font-bold text-slate-950">Các nghiệp vụ tiếp theo</h2>
-            <p className="mt-2 text-slate-600">Chỉnh sửa sau bảo vệ, công bố hồ sơ cuối cùng và lưu trữ sẽ được triển khai ở Sprint 8.</p>
+            <p className="mt-2 text-slate-600">Sprint 8 đã hoàn tất: chỉnh sửa sau bảo vệ, lưu trữ và khóa hồ sơ.</p>
           </div>
         </div>
       </div>

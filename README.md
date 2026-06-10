@@ -335,60 +335,50 @@ Admin: admin@example.com / Admin@123456
 
 ---
 
-# Sprint 7 - Council Scoring and Final Result Publication
+# Sprint 8 - Chỉnh sửa sau bảo vệ, lưu trữ và khóa hồ sơ
 
-Sprint 7 triển khai nghiệp vụ chấm điểm và công bố kết quả bảo vệ.
+## Phạm vi
+Sprint 8 triển khai Revision Module, Archive Module và Record Lock cho giai đoạn sau bảo vệ.
 
-## Scope
+## URL chính
 
-- Nhập điểm từng thành viên hội đồng.
-- Tính điểm hội đồng trung bình.
-- Lấy điểm GVHD và GVPB từ Sprint 5.
-- Tính điểm tổng kết theo công thức `(councilAverageScore * 2 + supervisorScore + reviewerScore) / 4`.
-- Generate, confirm và publish final result.
-- Sinh viên xem kết quả sau khi được công bố.
-- Defense session/minutes cơ bản.
-- Notification và audit log cho thao tác quan trọng.
+- Student Revision: http://localhost:3000/student/revision
+- Faculty Revision Review: http://localhost:3000/faculty/revisions
+- Student Archive: http://localhost:3000/student/archive
+- Archive Staff Records: http://localhost:3000/archive/records
+- Locked Record View: http://localhost:3000/records/locked
 
-## Out of scope
+## Tài khoản demo
 
-- Quy trình chỉnh sửa sau bảo vệ.
-- Nộp bản chỉnh sửa.
-- Kiểm tra bản chỉnh sửa.
-- Lưu trữ hồ sơ.
+- student@example.com / Student@123456
+- faculty@example.com / Faculty@123456
+- supervisor@example.com / Supervisor@123456
+- secretary@example.com / Secretary@123456
+- archive@example.com / Archive@123456
+- admin@example.com / Admin@123456
 
-## Run
+## Luồng demo Sprint 8
+
+1. Login faculty/secretary để xem hoặc tạo yêu cầu chỉnh sửa.
+2. Login student để vào `/student/revision` và nộp bản chỉnh sửa.
+3. Login faculty để approve revision hoặc yêu cầu sửa lại.
+4. Login student vào `/student/archive` để nộp hồ sơ lưu trữ.
+5. Login archive staff vào `/archive/records` để yêu cầu bổ sung, approve, complete và lock hồ sơ.
+6. Student xem hồ sơ đã khóa tại `/records/locked`.
+
+## Lệnh chạy
 
 ```bash
 docker compose down -v
-
 docker compose build --no-cache backend frontend
-
 docker compose up -d postgres redis minio
-
 docker compose run --rm backend npx prisma migrate deploy
-
 docker compose run --rm backend npm run prisma:seed
-
 docker compose up -d --build
 ```
 
-## Sprint 7 URLs
+## Commit
 
-- Secretary council scoring: `http://localhost:3000/secretary/council-scoring`
-- Council member scoring: `http://localhost:3000/council/my-scores`
-- Faculty results: `http://localhost:3000/faculty/results`
-- Student result: `http://localhost:3000/student/result`
-
-## Demo workflow
-
-1. Login `secretary@example.com` and enter council scores.
-2. Login `faculty@example.com`, generate result, confirm result, then publish result.
-3. Login `student@example.com` and view published result.
-
-## Demo accounts
-
-- secretary@example.com / Secretary@123456
-- council@example.com / Council@123456
-- faculty@example.com / Faculty@123456
-- student@example.com / Student@123456
+```text
+feat(sprint-8): implement post-defense revision archive and record locking
+```
