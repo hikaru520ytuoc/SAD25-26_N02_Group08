@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { SupervisorDefenseTable } from '@/components/sprint5/supervisor-defense-table';
 import { getSupervisorDefenseRegistrations } from '@/services/defense-registrations.service';
 import type { DefenseRegistration } from '@/types/sprint5';
@@ -26,7 +25,7 @@ export default function SupervisorDefenseRegistrationsPage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -39,6 +38,6 @@ export default function SupervisorDefenseRegistrationsPage() {
         {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
         <SupervisorDefenseTable items={items} onChanged={load} />
       </div>
-    </AppShell>
+    </>
   );
 }

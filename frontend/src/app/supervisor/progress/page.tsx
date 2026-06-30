@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { SupervisorProgressTable } from '@/components/sprint4/supervisor-progress-table';
 import { getSupervisorProgress } from '@/services/project-progress.service';
 import type { ProjectProgress } from '@/types/sprint4';
@@ -26,7 +25,7 @@ export default function SupervisorProgressPage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -39,6 +38,6 @@ export default function SupervisorProgressPage() {
         {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
         <SupervisorProgressTable progresses={progresses} onChanged={load} />
       </div>
-    </AppShell>
+    </>
   );
 }

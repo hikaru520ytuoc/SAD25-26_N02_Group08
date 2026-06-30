@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { FacultyRegistrationTable } from '@/components/sprint3/faculty-registration-table';
 import { facultyAssignSupervisor, facultyConfirmRegistration, facultyRejectRegistration, getAllTopicRegistrations, listSupervisorOptions } from '@/services/topic-registrations.service';
 import type { LecturerOption, TopicRegistration } from '@/types/sprint3';
@@ -44,7 +43,7 @@ export default function FacultyTopicRegistrationsPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Khoa xử lý đăng ký đề tài</h1>
@@ -53,6 +52,6 @@ export default function FacultyTopicRegistrationsPage() {
         {error && <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
         {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : <FacultyRegistrationTable items={items} supervisors={supervisors} onAssign={assign} onConfirm={confirm} onReject={reject} loading={loading} />}
       </div>
-    </AppShell>
+    </>
   );
 }

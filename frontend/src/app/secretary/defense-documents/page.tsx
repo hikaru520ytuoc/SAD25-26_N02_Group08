@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { DefenseDocumentStatusCard } from '@/components/sprint6/defense-document-status-card';
 import { DefenseFileList } from '@/components/sprint6/defense-file-list';
 import { SecretaryDocumentReviewDialog } from '@/components/sprint6/secretary-document-review-dialog';
@@ -38,7 +37,7 @@ export default function SecretaryDefenseDocumentsPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-slate-950">Thư ký kiểm tra hồ sơ bảo vệ</h1><p className="mt-2 text-slate-600">Yêu cầu bổ sung hoặc xác nhận hồ sơ hợp lệ.</p></div><Link href="/dashboard" className="rounded-xl border px-4 py-2 text-sm font-semibold">Dashboard</Link></div>
         {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : null}
@@ -54,6 +53,6 @@ export default function SecretaryDefenseDocumentsPage() {
           {!items.length && !loading ? <div className="rounded-3xl bg-white p-6 text-slate-500">Chưa có hồ sơ cần kiểm tra.</div> : null}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

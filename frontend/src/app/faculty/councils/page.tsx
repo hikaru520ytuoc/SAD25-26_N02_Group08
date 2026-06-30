@@ -2,7 +2,6 @@
 
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/common/page-header';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingState } from '@/components/common/loading-state';
@@ -60,7 +59,7 @@ export default function FacultyCouncilsPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <PageHeader title="Quản lý hội đồng bảo vệ" description="Một hội đồng nên có 4–6 đề tài/sinh viên. Số lượng này được tính từ các lịch bảo vệ gắn với hội đồng." />
         <CouncilForm onSubmit={submit} />
@@ -91,6 +90,6 @@ export default function FacultyCouncilsPage() {
           })}
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

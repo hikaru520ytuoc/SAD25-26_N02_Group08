@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { StudentEligibilityForm } from '@/components/sprint2/student-eligibility-form';
 import { StudentEligibilityTable } from '@/components/sprint2/student-eligibility-table';
 import { clearAccessToken } from '@/lib/auth-storage';
@@ -49,7 +48,7 @@ export default function FacultyStudentEligibilitiesPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Danh sách sinh viên đủ điều kiện</h1>
@@ -59,6 +58,6 @@ export default function FacultyStudentEligibilitiesPage() {
         <StudentEligibilityForm onSubmit={handleCreate} loading={saving} />
         {loading ? <div className="rounded-3xl bg-white p-8">Đang tải...</div> : <StudentEligibilityTable items={items} />}
       </div>
-    </AppShell>
+    </>
   );
 }

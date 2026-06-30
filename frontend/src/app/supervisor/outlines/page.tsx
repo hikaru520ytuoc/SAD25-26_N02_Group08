@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { SupervisorOutlineTable } from '@/components/sprint4/supervisor-outline-table';
 import { getSupervisorOutlines } from '@/services/outlines.service';
 import type { Outline } from '@/types/sprint4';
@@ -27,7 +26,7 @@ export default function SupervisorOutlinesPage() {
   useEffect(() => { void load(); }, [status]);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -46,6 +45,6 @@ export default function SupervisorOutlinesPage() {
         {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
         <SupervisorOutlineTable outlines={outlines} onChanged={load} />
       </div>
-    </AppShell>
+    </>
   );
 }

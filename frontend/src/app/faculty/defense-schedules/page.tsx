@@ -2,7 +2,6 @@
 
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { PageHeader } from '@/components/common/page-header';
 import { LoadingState } from '@/components/common/loading-state';
 import { ErrorState } from '@/components/common/error-state';
@@ -36,7 +35,7 @@ export default function FacultyDefenseSchedulesPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <PageHeader title="Lập lịch bảo vệ" description="Chỉ xếp lịch cho hồ sơ đã sẵn sàng. Backend kiểm tra hội đồng tối đa 6 đề tài, trùng phòng, trùng hội đồng và trùng thành viên hội đồng." />
         <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
@@ -48,6 +47,6 @@ export default function FacultyDefenseSchedulesPage() {
         {error && <ErrorState message={error} />}
         <DefenseScheduleTable schedules={items} />
       </div>
-    </AppShell>
+    </>
   );
 }

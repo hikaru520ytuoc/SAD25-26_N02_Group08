@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { StudentOutlineForm } from '@/components/sprint4/student-outline-form';
 import { StudentOutlineStatusCard } from '@/components/sprint4/student-outline-status-card';
 import { createOutline, getMyOutline, resubmitOutline } from '@/services/outlines.service';
@@ -37,7 +36,7 @@ export default function StudentOutlinePage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -51,6 +50,6 @@ export default function StudentOutlinePage() {
         <StudentOutlineStatusCard outline={outline} />
         <StudentOutlineForm outline={outline} onSubmit={submit} />
       </div>
-    </AppShell>
+    </>
   );
 }

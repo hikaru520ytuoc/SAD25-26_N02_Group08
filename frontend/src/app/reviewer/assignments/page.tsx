@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { ReviewerEvaluationForm } from '@/components/sprint5/reviewer-evaluation-form';
 import { getMyReviewerAssignments } from '@/services/reviewers.service';
 import type { ReviewerAssignment } from '@/types/sprint5';
@@ -26,7 +25,7 @@ export default function ReviewerAssignmentsPage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -39,6 +38,6 @@ export default function ReviewerAssignmentsPage() {
         {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
         <ReviewerEvaluationForm assignments={assignments} onChanged={load} />
       </div>
-    </AppShell>
+    </>
   );
 }

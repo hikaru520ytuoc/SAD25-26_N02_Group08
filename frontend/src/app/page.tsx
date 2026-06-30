@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Database, FileArchive, GraduationCap, Server } from 'lucide-react';
-import { AppShell } from '@/components/layout/app-shell';
 import { getBackendHealth, type HealthResponse } from '@/lib/api';
 
 type HealthState = 'checking' | 'connected' | 'disconnected';
@@ -43,7 +42,7 @@ export default function HomePage() {
         : 'bg-rose-50 text-rose-700 ring-rose-200';
 
   return (
-    <AppShell>
+    <>
       <section className="flex flex-1 items-center justify-center">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -126,6 +125,6 @@ export default function HomePage() {
           </div>
         </motion.div>
       </section>
-    </AppShell>
+    </>
   );
 }

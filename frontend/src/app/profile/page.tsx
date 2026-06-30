@@ -2,7 +2,6 @@
 
 import { Mail, Phone, Shield, UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingState } from '@/components/common/loading-state';
 import { getInitials, roleLabel } from '@/lib/formatters';
@@ -21,11 +20,11 @@ export default function ProfilePage() {
   }, []);
 
   if (!user) {
-    return <AppShell><LoadingState label="Đang tải hồ sơ cá nhân..." /></AppShell>;
+    return <><LoadingState label="Đang tải hồ sơ cá nhân..." /></>;
   }
 
   return (
-    <AppShell>
+    <>
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col items-center text-center">
@@ -86,6 +85,6 @@ export default function ProfilePage() {
           )}
         </section>
       </div>
-    </AppShell>
+    </>
   );
 }

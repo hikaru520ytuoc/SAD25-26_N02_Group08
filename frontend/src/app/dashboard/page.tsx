@@ -3,7 +3,6 @@
 import { ArrowRight, Bell, CheckCircle2, ClipboardList, GraduationCap, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { LoadingState } from '@/components/common/loading-state';
 import { StatusBadge } from '@/components/common/status-badge';
 import { getInitials, roleLabel } from '@/lib/formatters';
@@ -70,12 +69,12 @@ export default function DashboardPage() {
 
   const menuItems = useMemo(() => (user ? getMenuForRoles(user.roles).filter((item) => item.href !== '/dashboard').slice(0, 8) : []), [user]);
 
-  if (loading || !user) return <AppShell><LoadingState label="Đang tải dashboard..." /></AppShell>;
+  if (loading || !user) return <><LoadingState label="Đang tải dashboard..." /></>;
 
   const stats = statsForRoles(user);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 p-6 text-white md:p-8">
@@ -145,6 +144,6 @@ export default function DashboardPage() {
           </aside>
         </div>
       </div>
-    </AppShell>
+    </>
   );
 }

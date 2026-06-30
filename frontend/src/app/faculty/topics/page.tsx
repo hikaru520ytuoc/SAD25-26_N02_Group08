@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { TopicTable } from '@/components/sprint2/topic-table';
 import { clearAccessToken } from '@/lib/auth-storage';
 import { getMe } from '@/services/auth.service';
@@ -45,7 +44,7 @@ export default function FacultyTopicsPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Duyệt và công bố đề tài</h1>
@@ -75,6 +74,6 @@ export default function FacultyTopicsPage() {
         </div>
         {loading ? <div className="rounded-3xl bg-white p-8">Đang tải...</div> : <TopicTable topics={items} mode="faculty" onApprove={handleApprove} onReject={handleReject} onPublish={handlePublish} />}
       </div>
-    </AppShell>
+    </>
   );
 }

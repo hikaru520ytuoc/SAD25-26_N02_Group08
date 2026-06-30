@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { ProposeNewTopicForm } from '@/components/sprint3/propose-new-topic-form';
 import { RegisterExistingTopicForm } from '@/components/sprint3/register-existing-topic-form';
 import { StudentRegistrationStatusCard } from '@/components/sprint3/student-registration-status-card';
@@ -60,7 +59,7 @@ export default function StudentTopicRegistrationPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Đăng ký và đề xuất đề tài</h1>
@@ -75,6 +74,6 @@ export default function StudentTopicRegistrationPage() {
           </>
         )}
       </div>
-    </AppShell>
+    </>
   );
 }

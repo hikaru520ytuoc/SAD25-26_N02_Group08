@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { ReviewerAssignmentTable } from '@/components/sprint5/reviewer-assignment-table';
 import { getFacultyDefenseRegistrations } from '@/services/defense-registrations.service';
 import { getReviewerAssignments } from '@/services/reviewers.service';
@@ -30,7 +29,7 @@ export default function FacultyReviewerAssignmentsPage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -43,6 +42,6 @@ export default function FacultyReviewerAssignmentsPage() {
         {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
         <ReviewerAssignmentTable defenseItems={defenseItems} assignments={assignments} onChanged={load} />
       </div>
-    </AppShell>
+    </>
   );
 }

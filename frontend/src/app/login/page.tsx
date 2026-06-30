@@ -5,7 +5,6 @@ import { Eye, EyeOff, GraduationCap, Loader2, LockKeyhole, ShieldCheck } from 'l
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { AppShell } from '@/components/layout/app-shell';
 import { ApiClientError } from '@/lib/api-client';
 import { setAccessToken, setStoredUser } from '@/lib/auth-storage';
 import { login } from '@/services/auth.service';
@@ -47,7 +46,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="grid min-h-screen bg-slate-950 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="relative hidden overflow-hidden p-10 text-white lg:block">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.35),transparent_35%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.25),transparent_30%)]" />
@@ -120,6 +119,6 @@ export default function LoginPage() {
           </div>
         </section>
       </div>
-    </AppShell>
+    </>
   );
 }

@@ -14,13 +14,23 @@ import { Topbar } from './topbar';
 
 const publicRoutes = ['/', '/login'];
 
+function getInitialUser(isPublic: boolean): AuthUser | null {
+  if (isPublic) return null;
+  if (!getAccessToken()) return null;
+  return getStoredUser();
+}
+
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isPublic = publicRoutes.includes(pathname);
-  const [user, setUser] = useState<AuthUser | null>(() => getStoredUser());
-  const [loading, setLoading] = useState(!isPublic);
-  const [forbidden, setForbidden] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(() => getInitialUser(isPublic));
+  const [loading, setLoading] = useState(() => !isPublic && !getInitialUser(isPublic));
+  const [forbidden, setForbidden] = useState(() => {
+    const initialUser = getInitialUser(isPublic);
+    return Boolean(initialUser && !isPathAllowed(pathname, initialUser.roles));
+  });
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -34,6 +44,15 @@ export function AppShell({ children }: { children: ReactNode }) {
       if (!getAccessToken()) {
         router.replace('/login');
         return;
+      }
+
+      const cachedUser = getStoredUser();
+      if (cachedUser) {
+        setUser(cachedUser);
+        setForbidden(!isPathAllowed(pathname, cachedUser.roles));
+        setLoading(false);
+      } else {
+        setLoading(true);
       }
 
       try {
@@ -65,9 +84,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (forbidden) {
     return (
       <main className="min-h-screen bg-slate-50">
-        <Sidebar user={user} />
+        <Sidebar user={user} mobileOpen={mobileSidebarOpen} onMobileClose={() => setMobileSidebarOpen(false)} />
         <div className="lg:pl-72">
-          <Topbar user={user} />
+          <Topbar user={user} onMenuClick={() => setMobileSidebarOpen(true)} />
           <div className="p-6 lg:p-8">
             <div className="rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-sm">
               <h1 className="text-2xl font-bold text-slate-950">Không có quyền truy cập</h1>
@@ -83,9 +102,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <main className="min-h-screen bg-slate-50">
-      <Sidebar user={user} />
+      <Sidebar user={user} mobileOpen={mobileSidebarOpen} onMobileClose={() => setMobileSidebarOpen(false)} />
       <div className="lg:pl-72">
-        <Topbar user={user} />
+        <Topbar user={user} onMenuClick={() => setMobileSidebarOpen(true)} />
         <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 lg:p-8">
           {showStudentStepper && <ProjectWorkflowStepper locked={pathname.startsWith('/records/locked')} />}
           {children}

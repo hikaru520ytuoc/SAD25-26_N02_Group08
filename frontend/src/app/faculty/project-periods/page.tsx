@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { ProjectPeriodForm } from '@/components/sprint2/project-period-form';
 import { ProjectPeriodTable } from '@/components/sprint2/project-period-table';
 import { clearAccessToken } from '@/lib/auth-storage';
@@ -52,7 +51,7 @@ export default function FacultyProjectPeriodsPage() {
   async function handleClose(id: string) { await closeProjectPeriod(id); await load(); }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Quản lý đợt đồ án</h1>
@@ -62,6 +61,6 @@ export default function FacultyProjectPeriodsPage() {
         <ProjectPeriodForm onSubmit={handleCreate} loading={saving} />
         {loading ? <div className="rounded-3xl bg-white p-8">Đang tải...</div> : <ProjectPeriodTable periods={items} onOpen={handleOpen} onClose={handleClose} />}
       </div>
-    </AppShell>
+    </>
   );
 }

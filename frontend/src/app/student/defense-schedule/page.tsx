@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { DefenseDocumentForm } from '@/components/sprint6/defense-document-form';
 import { DefenseDocumentStatusCard } from '@/components/sprint6/defense-document-status-card';
 import { StudentDefenseScheduleCard } from '@/components/sprint6/student-defense-schedule-card';
@@ -43,7 +42,7 @@ export default function StudentDefenseSchedulePage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-slate-950">Lịch và hồ sơ bảo vệ</h1><p className="mt-2 text-slate-600">Xem lịch, nộp hoặc bổ sung hồ sơ bảo vệ.</p></div><Link href="/dashboard" className="rounded-xl border px-4 py-2 text-sm font-semibold">Dashboard</Link></div>
         {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : null}
@@ -53,6 +52,6 @@ export default function StudentDefenseSchedulePage() {
         {document ? <DefenseDocumentStatusCard document={document} /> : null}
         {schedule && document?.status !== 'APPROVED' ? <DefenseDocumentForm onSubmit={submit} submitLabel={document?.status === 'NEEDS_SUPPLEMENT' ? 'Bổ sung hồ sơ' : 'Nộp hồ sơ'} /> : null}
       </div>
-    </AppShell>
+    </>
   );
 }

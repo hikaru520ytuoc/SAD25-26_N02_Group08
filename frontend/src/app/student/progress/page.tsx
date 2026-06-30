@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { StudentProgressForm } from '@/components/sprint4/student-progress-form';
 import { StudentProgressList } from '@/components/sprint4/student-progress-list';
 import { createProgress, getMyProgress } from '@/services/project-progress.service';
@@ -33,7 +32,7 @@ export default function StudentProgressPage() {
   }
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -47,6 +46,6 @@ export default function StudentProgressPage() {
         <StudentProgressForm onSubmit={submit} />
         <StudentProgressList progresses={progresses} />
       </div>
-    </AppShell>
+    </>
   );
 }

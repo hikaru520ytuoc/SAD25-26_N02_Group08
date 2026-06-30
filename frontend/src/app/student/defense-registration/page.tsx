@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { AppShell } from '@/components/layout/app-shell';
 import { DefenseRegistrationForm } from '@/components/sprint5/defense-registration-form';
 import { DefenseRegistrationStatusCard } from '@/components/sprint5/defense-registration-status-card';
 import { createDefenseRegistration, getMyDefenseRegistration, resubmitDefenseRegistration } from '@/services/defense-registrations.service';
@@ -39,7 +38,7 @@ export default function StudentDefenseRegistrationPage() {
   const canSubmit = !registration || ['NEEDS_REVISION', 'REVIEWER_NEEDS_REVISION'].includes(registration.status);
 
   return (
-    <AppShell>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
@@ -53,6 +52,6 @@ export default function StudentDefenseRegistrationPage() {
         <DefenseRegistrationStatusCard registration={registration} />
         {canSubmit ? <DefenseRegistrationForm onSubmit={submit} /> : <div className="rounded-3xl bg-white p-6 shadow-sm">Hồ sơ đã được xử lý, hiện không thể nộp mới.</div>}
       </div>
-    </AppShell>
+    </>
   );
 }
