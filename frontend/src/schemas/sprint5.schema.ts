@@ -4,9 +4,9 @@ export const defenseRegistrationSchema = z.object({
   title: z.string().min(1, 'Tên hồ sơ/báo cáo không được rỗng'),
   summary: z.string().optional(),
   studentNote: z.string().optional(),
-  reportFileId: z.string().uuid('Cần upload file báo cáo'),
-  slideFileId: z.string().uuid().optional(),
-  additionalDocumentFileId: z.string().uuid().optional(),
+  reportFileId: z.string().min(1, 'Vui lòng upload báo cáo.'),
+  slideFileId: z.string().min(1, 'Vui lòng chọn dữ liệu.').optional(),
+  additionalDocumentFileId: z.string().min(1, 'Vui lòng chọn dữ liệu.').optional(),
 });
 
 export const supervisorApproveDefenseSchema = z.object({
@@ -19,12 +19,12 @@ export const supervisorRejectDefenseSchema = z.object({
 });
 
 export const reviewerAssignmentSchema = z.object({
-  defenseRegistrationId: z.string().uuid(),
-  reviewerId: z.string().uuid('Cần chọn GVPB'),
+  defenseRegistrationId: z.string().min(1, 'Vui lòng chọn dữ liệu.'),
+  reviewerId: z.string().min(1, 'Vui lòng chọn GVPB.'),
 });
 
 export const reviewerEvaluationSchema = z.object({
-  reviewerAssignmentId: z.string().uuid(),
+  reviewerAssignmentId: z.string().min(1, 'Vui lòng chọn dữ liệu.'),
   comment: z.string().min(1, 'Nhận xét phản biện không được rỗng'),
   strengths: z.string().optional(),
   weaknesses: z.string().optional(),

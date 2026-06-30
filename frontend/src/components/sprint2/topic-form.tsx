@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { ProjectPeriodSelect } from '@/components/common/selects';
 import { topicSchema } from '@/schemas/sprint2.schema';
 import type { TopicInput } from '@/services/topics.service';
 
@@ -14,11 +15,12 @@ type Props = {
 };
 
 export function TopicForm({ onSubmit, loading }: Props) {
-  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(topicSchema),
     defaultValues: {
       title: 'Xây dựng hệ thống quản lý đồ án tốt nghiệp',
       description: 'Đề tài xây dựng web app quản lý quy trình đồ án tốt nghiệp.',
+      projectPeriodId: '',
       maxStudents: 1,
       major: 'Software Engineering',
     },
@@ -28,7 +30,7 @@ export function TopicForm({ onSubmit, loading }: Props) {
     <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
       <div className="md:col-span-2">
         <h2 className="text-xl font-bold text-slate-950">Tạo đề tài</h2>
-        <p className="text-sm text-slate-500">Supervisor tạo đề tài ở trạng thái DRAFT, sau đó gửi Khoa duyệt.</p>
+        <p className="text-sm text-slate-500">GVHD tạo đề tài ở trạng thái nháp. Đợt đồ án được chọn bằng tên, không nhập mã nội bộ.</p>
       </div>
       <label className="space-y-1 text-sm font-medium text-slate-700 md:col-span-2">
         Tên đề tài
@@ -40,11 +42,12 @@ export function TopicForm({ onSubmit, loading }: Props) {
         <textarea {...register('description')} className="w-full rounded-xl border px-3 py-2" rows={3} />
         {errors.description && <p className="text-xs text-red-600">{errors.description.message}</p>}
       </label>
-      <label className="space-y-1 text-sm font-medium text-slate-700">
-        Project Period ID
-        <input {...register('projectPeriodId')} className="w-full rounded-xl border px-3 py-2" placeholder="UUID đợt đồ án" />
-        {errors.projectPeriodId && <p className="text-xs text-red-600">{errors.projectPeriodId.message}</p>}
-      </label>
+      <ProjectPeriodSelect
+        status="OPEN"
+        value={watch('projectPeriodId')}
+        onChange={(value) => setValue('projectPeriodId', value, { shouldValidate: true })}
+        error={errors.projectPeriodId?.message}
+      />
       <label className="space-y-1 text-sm font-medium text-slate-700">
         Số SV tối đa
         <input type="number" {...register('maxStudents')} className="w-full rounded-xl border px-3 py-2" />

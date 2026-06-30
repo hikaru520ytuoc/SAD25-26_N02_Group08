@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const councilScoreSchema = z.object({
-  defenseScheduleId: z.string().uuid('Defense schedule không hợp lệ'),
-  councilMemberId: z.string().uuid('Council member không hợp lệ'),
+  defenseScheduleId: z.string().min(1, 'Vui lòng chọn lịch bảo vệ.'),
+  councilMemberId: z.string().min(1, 'Vui lòng chọn thành viên hội đồng.'),
   score: z.coerce.number().min(0, 'Điểm tối thiểu 0').max(10, 'Điểm tối đa 10'),
   comment: z.string().optional(),
 });
@@ -17,7 +17,7 @@ export const confirmResultSchema = z.object({
 });
 
 export const defenseSessionSchema = z.object({
-  defenseScheduleId: z.string().uuid(),
+  defenseScheduleId: z.string().min(1, 'Vui lòng chọn dữ liệu.'),
   sessionStatus: z.enum(['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED']).optional(),
   generalComment: z.string().optional(),
   conclusion: z.string().optional(),

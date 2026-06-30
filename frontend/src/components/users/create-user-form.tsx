@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { FacultySelect, ProjectPeriodSelect, RoleMultiSelect } from '@/components/common/selects';
 import { createUserSchema, type CreateUserFormValues } from '@/schemas/user.schema';
 import type { Role } from '@/types/auth';
 
@@ -16,7 +17,7 @@ const defaultStudentProfile = {
   className: '',
   major: 'Software Engineering',
   facultyId: '',
-  projectPeriodId: '11111111-1111-4111-8111-111111111111',
+  projectPeriodId: '',
   internshipStatus: 'COMPLETED' as const,
   academicStatus: 'ACTIVE' as const,
   completedCredits: 110,
@@ -51,31 +52,31 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
     let valid = true;
 
     if (!profile?.studentCode?.trim()) {
-      form.setError('studentProfile.studentCode', { message: 'Mã sinh viên bắt buộc khi tạo tài khoản STUDENT' });
+      form.setError('studentProfile.studentCode', { message: 'Vui lòng nhập mã sinh viên.' });
       valid = false;
     }
     if (!profile?.className?.trim()) {
-      form.setError('studentProfile.className', { message: 'Lớp bắt buộc khi tạo tài khoản STUDENT' });
+      form.setError('studentProfile.className', { message: 'Vui lòng nhập lớp.' });
       valid = false;
     }
     if (!profile?.major?.trim()) {
-      form.setError('studentProfile.major', { message: 'Ngành bắt buộc khi tạo tài khoản STUDENT' });
+      form.setError('studentProfile.major', { message: 'Vui lòng nhập ngành.' });
       valid = false;
     }
     if (!profile?.projectPeriodId?.trim()) {
-      form.setError('studentProfile.projectPeriodId', { message: 'Project Period ID bắt buộc để tạo bản ghi xét điều kiện' });
+      form.setError('studentProfile.projectPeriodId', { message: 'Vui lòng chọn đợt đồ án để tạo bản ghi xét điều kiện.' });
       valid = false;
     }
     if (profile?.completedCredits === undefined || Number.isNaN(profile.completedCredits)) {
-      form.setError('studentProfile.completedCredits', { message: 'Số tín chỉ đã tích lũy bắt buộc' });
+      form.setError('studentProfile.completedCredits', { message: 'Vui lòng nhập số tín chỉ đã tích lũy.' });
       valid = false;
     }
     if (profile?.requiredCredits === undefined || Number.isNaN(profile.requiredCredits)) {
-      form.setError('studentProfile.requiredCredits', { message: 'Số tín chỉ yêu cầu bắt buộc' });
+      form.setError('studentProfile.requiredCredits', { message: 'Vui lòng nhập số tín chỉ yêu cầu.' });
       valid = false;
     }
     if (profile?.gpa === undefined || Number.isNaN(profile.gpa)) {
-      form.setError('studentProfile.gpa', { message: 'GPA/CPA bắt buộc' });
+      form.setError('studentProfile.gpa', { message: 'Vui lòng nhập GPA/CPA.' });
       valid = false;
     }
 
@@ -105,7 +106,7 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
     <form onSubmit={form.handleSubmit(handleSubmit)} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <h2 className="text-xl font-bold text-slate-950">Tạo người dùng</h2>
       <p className="mt-1 text-sm text-slate-500">
-        Khi chọn role STUDENT, Admin nhập thủ công hồ sơ sinh viên và dữ liệu xét điều kiện làm đồ án.
+        Khi chọn role STUDENT, Admin nhập thủ công hồ sơ sinh viên. Các ID nội bộ được chọn qua dropdown và gửi ẩn về backend.
       </p>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -131,23 +132,19 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
       </div>
 
       <div className="mt-5">
-        <p className="text-sm font-medium text-slate-700">Role</p>
-        <div className="mt-2 grid gap-2 md:grid-cols-2">
-          {roles.map((role) => (
-            <label key={role.id} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm">
-              <input type="checkbox" value={role.id} {...form.register('roleIds')} />
-              <span>{role.code}</span>
-            </label>
-          ))}
-        </div>
-        {form.formState.errors.roleIds && <p className="mt-1 text-sm text-rose-600">{form.formState.errors.roleIds.message}</p>}
+        <RoleMultiSelect
+          roles={roles}
+          value={selectedRoleIds}
+          onChange={(value) => form.setValue('roleIds', value, { shouldValidate: true })}
+          error={form.formState.errors.roleIds?.message}
+        />
       </div>
 
       {isStudentRoleSelected && (
         <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50/60 p-5">
           <h3 className="text-lg font-bold text-slate-950">Hồ sơ sinh viên và dữ liệu xét điều kiện</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Dữ liệu này được nhập thủ công khi tạo tài khoản sinh viên và hệ thống tự tính ELIGIBLE/NOT_ELIGIBLE.
+            Các thông tin học vụ là dữ liệu nhập thủ công/phụ trợ. Điều kiện chính của hệ thống vẫn là trạng thái thực tập và xác nhận của Khoa.
           </p>
 
           <div className="mt-4 grid gap-4 md:grid-cols-3">
@@ -166,63 +163,71 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
               <input className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.major')} />
               {form.formState.errors.studentProfile?.major && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.major.message}</p>}
             </label>
-            <label className="text-sm font-medium text-slate-700 md:col-span-2">
-              Project Period ID
-              <input className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.projectPeriodId')} />
-              {form.formState.errors.studentProfile?.projectPeriodId && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.projectPeriodId.message}</p>}
-            </label>
-            <label className="text-sm font-medium text-slate-700">
-              Faculty ID tùy chọn
-              <input className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.facultyId')} placeholder="Có thể bỏ trống" />
-            </label>
+            <ProjectPeriodSelect
+              className="md:col-span-2"
+              status="OPEN"
+              value={form.watch('studentProfile.projectPeriodId')}
+              onChange={(value) => form.setValue('studentProfile.projectPeriodId', value, { shouldValidate: true })}
+              error={form.formState.errors.studentProfile?.projectPeriodId?.message}
+            />
+            <FacultySelect
+              optional
+              value={form.watch('studentProfile.facultyId')}
+              onChange={(value) => form.setValue('studentProfile.facultyId', value)}
+            />
             <label className="text-sm font-medium text-slate-700">
               Trạng thái thực tập
               <select className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.internshipStatus')}>
-                <option value="COMPLETED">COMPLETED</option>
-                <option value="WAIVED">WAIVED</option>
-                <option value="NOT_COMPLETED">NOT_COMPLETED</option>
+                <option value="COMPLETED">Đã hoàn thành</option>
+                <option value="WAIVED">Được miễn</option>
+                <option value="NOT_COMPLETED">Chưa hoàn thành</option>
               </select>
             </label>
             <label className="text-sm font-medium text-slate-700">
               Trạng thái học vụ
               <select className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.academicStatus')}>
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="SUSPENDED">SUSPENDED</option>
-                <option value="GRADUATED">GRADUATED</option>
-                <option value="DROPPED">DROPPED</option>
+                <option value="ACTIVE">Đang học</option>
+                <option value="SUSPENDED">Tạm đình chỉ</option>
+                <option value="GRADUATED">Đã tốt nghiệp</option>
+                <option value="DROPPED">Thôi học</option>
               </select>
-            </label>
-            <label className="text-sm font-medium text-slate-700">
-              Tín chỉ đã tích lũy
-              <input type="number" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.completedCredits', { valueAsNumber: true })} />
-              {form.formState.errors.studentProfile?.completedCredits && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.completedCredits.message}</p>}
-            </label>
-            <label className="text-sm font-medium text-slate-700">
-              Tín chỉ yêu cầu
-              <input type="number" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.requiredCredits', { valueAsNumber: true })} />
-              {form.formState.errors.studentProfile?.requiredCredits && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.requiredCredits.message}</p>}
-            </label>
-            <label className="text-sm font-medium text-slate-700">
-              GPA/CPA
-              <input type="number" step="0.01" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.gpa', { valueAsNumber: true })} />
-              {form.formState.errors.studentProfile?.gpa && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.gpa.message}</p>}
             </label>
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
-              <input type="checkbox" {...form.register('studentProfile.hasPrerequisiteDebt')} />
-              Còn nợ môn tiên quyết
-            </label>
-            <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
-              <input type="checkbox" {...form.register('studentProfile.hasTuitionDebt')} />
-              Còn nợ học phí
-            </label>
-            <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
-              <input type="checkbox" {...form.register('studentProfile.hasDisciplinaryAction')} />
-              Có tình trạng kỷ luật
-            </label>
-          </div>
+          <details className="mt-4 rounded-2xl border border-blue-100 bg-white p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-blue-800">Thông tin bổ sung/Advanced</summary>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <label className="text-sm font-medium text-slate-700">
+                Tín chỉ đã tích lũy
+                <input type="number" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.completedCredits', { valueAsNumber: true })} />
+                {form.formState.errors.studentProfile?.completedCredits && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.completedCredits.message}</p>}
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                Tín chỉ yêu cầu
+                <input type="number" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.requiredCredits', { valueAsNumber: true })} />
+                {form.formState.errors.studentProfile?.requiredCredits && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.requiredCredits.message}</p>}
+              </label>
+              <label className="text-sm font-medium text-slate-700">
+                GPA/CPA
+                <input type="number" step="0.01" className="mt-2 w-full rounded-xl border px-3 py-2" {...form.register('studentProfile.gpa', { valueAsNumber: true })} />
+                {form.formState.errors.studentProfile?.gpa && <p className="mt-1 text-xs text-rose-600">{form.formState.errors.studentProfile.gpa.message}</p>}
+              </label>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
+                <input type="checkbox" {...form.register('studentProfile.hasPrerequisiteDebt')} />
+                Còn nợ môn tiên quyết
+              </label>
+              <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
+                <input type="checkbox" {...form.register('studentProfile.hasTuitionDebt')} />
+                Còn nợ học phí
+              </label>
+              <label className="flex items-center gap-2 rounded-xl border bg-white px-3 py-2 text-sm">
+                <input type="checkbox" {...form.register('studentProfile.hasDisciplinaryAction')} />
+                Có tình trạng kỷ luật
+              </label>
+            </div>
+          </details>
 
           <label className="mt-4 block text-sm font-medium text-slate-700">
             Ghi chú xét điều kiện

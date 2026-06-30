@@ -25,6 +25,7 @@ import { DefenseSessionsModule } from './modules/defense-sessions/defense-sessio
 import { RevisionsModule } from './modules/revisions/revisions.module';
 import { ArchivesModule } from './modules/archives/archives.module';
 import { RecordLockModule } from './modules/record-lock/record-lock.module';
+import { LookupsModule } from './modules/lookups/lookups.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -59,6 +60,7 @@ import { PrismaModule } from './prisma/prisma.module';
     RecordLockModule,
     RevisionsModule,
     ArchivesModule,
+    LookupsModule,
   ],
 })
 export class AppModule {}

@@ -26,8 +26,8 @@ export const projectPeriodSchema = z
   );
 
 export const studentEligibilitySchema = z.object({
-  studentId: z.string().uuid('studentId phải là UUID'),
-  projectPeriodId: z.string().uuid('projectPeriodId phải là UUID'),
+  studentId: z.string().min(1, 'Vui lòng chọn sinh viên.'),
+  projectPeriodId: z.string().min(1, 'Vui lòng chọn đợt đồ án.'),
   internshipStatus: z.enum(['NOT_COMPLETED', 'COMPLETED', 'WAIVED']),
   academicStatus: z.enum(['ACTIVE', 'SUSPENDED', 'GRADUATED', 'DROPPED']).default('ACTIVE'),
   completedCredits: z.coerce.number().min(0, 'Tín chỉ đã tích lũy không được âm'),
@@ -47,7 +47,7 @@ export const topicSchema = z.object({
   expectedOutput: z.string().optional(),
   major: z.string().optional(),
   maxStudents: z.coerce.number().min(1, 'Số lượng sinh viên phải từ 1 trở lên'),
-  projectPeriodId: z.string().uuid('projectPeriodId phải là UUID'),
+  projectPeriodId: z.string().min(1, 'Vui lòng chọn đợt đồ án.'),
 });
 
 export const rejectTopicSchema = z.object({
