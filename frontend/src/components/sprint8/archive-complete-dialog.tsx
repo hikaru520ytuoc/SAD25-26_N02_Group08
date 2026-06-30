@@ -1,3 +1,21 @@
-export function ArchiveCompleteDialog() {
-  return <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">ArchiveCompleteDialog component placeholder for Sprint 8 workflow.</div>;
+'use client';
+
+import type { ArchiveRecord } from '@/types/sprint8';
+
+export function ArchiveCompleteDialog({ record, onComplete }: { record: ArchiveRecord; onComplete: (record: ArchiveRecord) => Promise<void> | void }) {
+  async function complete() {
+    if (!confirm('Xác nhận hoàn tất lưu trữ hồ sơ này?')) return;
+    await onComplete(record);
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={complete}
+      disabled={record.status === 'LOCKED'}
+      className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+    >
+      Hoàn tất lưu trữ
+    </button>
+  );
 }

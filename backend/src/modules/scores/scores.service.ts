@@ -4,6 +4,7 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { RecordLockService } from '../record-lock/record-lock.service';
 import { CreateCouncilScoreDto } from './dto/create-council-score.dto';
 import { CreateReviewerScoreDto } from './dto/create-reviewer-score.dto';
 import { CreateSupervisorScoreDto } from './dto/create-supervisor-score.dto';
@@ -16,7 +17,11 @@ const DECIMAL_PLACES = 2;
 
 @Injectable()
 export class ScoresService {
-  constructor(private readonly prisma: PrismaService, private readonly auditLogsService: AuditLogsService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+    private readonly recordLockService: RecordLockService,
+  ) {}
 
   async createSupervisorScore(dto: CreateSupervisorScoreDto, actor: AuthUser) {
     const registration = await this.prisma.defenseRegistration.findUnique({
@@ -24,6 +29,7 @@ export class ScoresService {
       include: { supervisor: true },
     });
     if (!registration) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
     await this.ensureResultNotPublishedByRegistration(registration.id);
     const lecturer = await this.getLecturerByUserId(actor.id);
     if (registration.supervisorId !== lecturer.id) throw new AppException('DEFENSE_REGISTRATION_NOT_ALLOWED', 'GVHD không có quyền nhập điểm hồ sơ này', HttpStatus.FORBIDDEN);
@@ -41,6 +47,7 @@ export class ScoresService {
   async updateSupervisorScore(id: string, dto: UpdateSupervisorScoreDto, actor: AuthUser) {
     const existing = await this.prisma.supervisorScore.findUnique({ where: { id } });
     if (!existing) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy điểm hướng dẫn', HttpStatus.NOT_FOUND);
+    await this.ensureRegistrationNotLocked(existing.defenseRegistrationId);
     await this.ensureResultNotPublishedByRegistration(existing.defenseRegistrationId);
     const lecturer = await this.getLecturerByUserId(actor.id);
     if (existing.supervisorId !== lecturer.id) throw new AppException('DEFENSE_REGISTRATION_NOT_ALLOWED', 'GVHD không có quyền sửa điểm này', HttpStatus.FORBIDDEN);
@@ -62,6 +69,7 @@ export class ScoresService {
   async createReviewerScore(dto: CreateReviewerScoreDto, actor: AuthUser) {
     const assignment = await this.prisma.reviewerAssignment.findUnique({ where: { id: dto.reviewerAssignmentId }, include: { reviewer: true } });
     if (!assignment) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy phân công phản biện', HttpStatus.NOT_FOUND);
+    await this.ensureRegistrationNotLocked(assignment.defenseRegistrationId);
     await this.ensureResultNotPublishedByRegistration(assignment.defenseRegistrationId);
     const lecturer = await this.getLecturerByUserId(actor.id);
     if (assignment.reviewerId !== lecturer.id) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không tìm thấy phân công phản biện của bạn', HttpStatus.NOT_FOUND);
@@ -79,6 +87,7 @@ export class ScoresService {
   async updateReviewerScore(id: string, dto: UpdateReviewerScoreDto, actor: AuthUser) {
     const existing = await this.prisma.reviewerScore.findUnique({ where: { id }, include: { reviewerAssignment: true } });
     if (!existing) throw new AppException('REVIEWER_SCORE_INVALID', 'Không tìm thấy điểm phản biện', HttpStatus.NOT_FOUND);
+    await this.ensureRegistrationNotLocked(existing.reviewerAssignment.defenseRegistrationId);
     await this.ensureResultNotPublishedByRegistration(existing.reviewerAssignment.defenseRegistrationId);
     const lecturer = await this.getLecturerByUserId(actor.id);
     if (existing.reviewerId !== lecturer.id) throw new AppException('REVIEWER_ASSIGNMENT_NOT_FOUND', 'Không có quyền sửa điểm phản biện này', HttpStatus.NOT_FOUND);
@@ -116,6 +125,7 @@ export class ScoresService {
     if (schedule.defenseDocument?.status !== DefenseDocumentStatus.APPROVED) {
       throw new AppException('SCORE_CALCULATION_NOT_ALLOWED', 'Hồ sơ bảo vệ chưa được thư ký xác nhận hợp lệ', HttpStatus.BAD_REQUEST);
     }
+    await this.recordLockService.checkProjectRecordLocked(schedule.studentId, schedule.projectPeriodId);
     await this.ensureResultNotPublishedByRegistration(schedule.defenseRegistrationId);
 
     const targetMember = schedule.council.members.find((member) => member.id === dto.councilMemberId);
@@ -143,6 +153,7 @@ export class ScoresService {
   async updateCouncilScore(id: string, dto: UpdateCouncilScoreDto, actor: AuthUser) {
     const existing = await this.prisma.councilScore.findUnique({ where: { id }, include: { defenseSchedule: { include: { council: { include: { members: true } } } }, councilMember: true } });
     if (!existing) throw new AppException('COUNCIL_SCORE_NOT_FOUND', 'Không tìm thấy điểm hội đồng', HttpStatus.NOT_FOUND);
+    await this.ensureRegistrationNotLocked(existing.defenseRegistrationId);
     await this.ensureResultNotPublishedByRegistration(existing.defenseRegistrationId);
     await this.ensureCouncilScoringPermission(existing.defenseSchedule, existing.councilMember, actor);
     if (typeof dto.score === 'number') this.validateScore(dto.score, 'COUNCIL_SCORE_INVALID');
@@ -164,6 +175,7 @@ export class ScoresService {
       },
     });
     if (!registration) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
     if (!registration.supervisorScore) throw new AppException('SCORE_MISSING_SUPERVISOR', 'Thiếu điểm GVHD', HttpStatus.BAD_REQUEST);
     if (!registration.reviewerAssignment?.reviewerScore) throw new AppException('SCORE_MISSING_REVIEWER', 'Thiếu điểm GVPB', HttpStatus.BAD_REQUEST);
     if (!registration.defenseSchedule || registration.defenseSchedule.councilScores.length === 0) {
@@ -227,6 +239,12 @@ export class ScoresService {
       throw new AppException('COUNCIL_MEMBER_NOT_IN_COUNCIL', 'Bạn không thuộc hội đồng này', HttpStatus.FORBIDDEN);
     }
     return schedule;
+  }
+
+  private async ensureRegistrationNotLocked(defenseRegistrationId: string) {
+    const registration = await this.prisma.defenseRegistration.findUnique({ where: { id: defenseRegistrationId }, select: { studentId: true, projectPeriodId: true } });
+    if (!registration) throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
   }
 
   private async ensureResultNotPublishedByRegistration(defenseRegistrationId: string) {

@@ -76,6 +76,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     roles: ['ADMIN'],
     items: [
       { title: 'Người dùng', href: '/admin/users', roles: ['ADMIN'] },
+      { title: 'Vai trò', href: '/admin/roles', roles: ['ADMIN'] },
     ],
   },
   {

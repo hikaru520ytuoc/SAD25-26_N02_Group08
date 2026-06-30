@@ -27,6 +27,7 @@ export default function NotificationsPage() {
   async function handleMarkAllRead() {
     await markAllNotificationsRead();
     await loadData();
+    window.dispatchEvent(new Event('notifications:updated'));
   }
 
   return (

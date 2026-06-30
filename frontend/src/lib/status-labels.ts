@@ -22,6 +22,10 @@ export const STATUS_LABELS: Record<string, StatusMeta> = {
   OFFICIALLY_ASSIGNED: { label: 'Đã chốt đề tài/GVHD', tone: 'emerald' },
 
   NEEDS_REVISION: { label: 'Cần chỉnh sửa', tone: 'amber' },
+  PENDING_SUBMISSION: { label: 'Chờ nộp bản chỉnh sửa', tone: 'amber' },
+  REVIEWED: { label: 'Đã kiểm tra', tone: 'blue' },
+  REJECTED_BY_SUPERVISOR: { label: 'GVHD từ chối', tone: 'rose' },
+
   NEEDS_CHANGES: { label: 'Cần chỉnh sửa', tone: 'amber' },
   APPROVED_BY_SUPERVISOR: { label: 'GVHD đã xác nhận', tone: 'emerald' },
   APPROVED_BY_REVIEWER: { label: 'GVPB đã xác nhận', tone: 'emerald' },

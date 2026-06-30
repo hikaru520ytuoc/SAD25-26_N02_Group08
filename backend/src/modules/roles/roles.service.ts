@@ -15,7 +15,10 @@ export class RolesService {
   ) {}
 
   async findAll() {
-    return this.prisma.role.findMany({ orderBy: { code: 'asc' } });
+    return this.prisma.role.findMany({
+      orderBy: { code: 'asc' },
+      include: { _count: { select: { userRoles: true } } },
+    });
   }
 
   async create(dto: CreateRoleDto, actor: AuthUser) {

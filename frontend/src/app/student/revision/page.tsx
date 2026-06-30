@@ -1,23 +1,51 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FileUpload } from '@/components/sprint4/file-upload';
+import { RevisionRequestCard } from '@/components/sprint8/revision-request-card';
+import { RevisionSubmissionForm } from '@/components/sprint8/revision-submission-form';
+import { RevisionSubmissionHistory } from '@/components/sprint8/revision-submission-history';
 import { getMyRevisions, submitRevision } from '@/services/revisions.service';
 import type { RevisionRequest } from '@/types/sprint8';
-import type { FileDocument } from '@/types/sprint4';
+import type { RevisionSubmissionValues } from '@/schemas/sprint8.schema';
 
 export default function StudentRevisionPage() {
   const [items, setItems] = useState<RevisionRequest[]>([]);
   const [error, setError] = useState('');
-  const [fileId, setFileId] = useState('');
-  const [note, setNote] = useState('');
 
-  async function load() { try { setItems(await getMyRevisions()); } catch (err) { setError(err instanceof Error ? err.message : 'Không tải được yêu cầu chỉnh sửa'); } }
-  useEffect(() => { load(); }, []);
-
-  async function handleSubmit(id: string) {
-    try { await submitRevision(id, { reportFileId: fileId, note }); setFileId(''); setNote(''); await load(); } catch (err) { setError(err instanceof Error ? err.message : 'Nộp bản chỉnh sửa thất bại'); }
+  async function load() {
+    try {
+      setError('');
+      setItems(await getMyRevisions());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không tải được yêu cầu chỉnh sửa');
+    }
   }
 
-  return <><div className="space-y-6"><h1 className="text-3xl font-bold">Chỉnh sửa sau bảo vệ</h1>{error && <div className="rounded-xl bg-red-50 p-4 text-red-700">{error}</div>}{items.length === 0 && <div className="rounded-3xl bg-white p-6 shadow-sm">Không có yêu cầu chỉnh sửa.</div>}{items.map((item) => <div key={item.id} className="rounded-3xl bg-white p-6 shadow-sm space-y-4"><div className="flex justify-between"><div><h2 className="text-xl font-bold">{item.title}</h2><p className="text-slate-600">{item.description}</p><p className="text-sm text-slate-500">Trạng thái: {item.status}</p>{item.feedback && <p className="text-sm text-red-600">Feedback: {item.feedback}</p>}</div></div>{['PENDING_SUBMISSION','NEEDS_CHANGES'].includes(item.status) && <div className="space-y-3 rounded-2xl border p-4"><FileUpload fileType="REVISION_REPORT" onUploaded={(file: FileDocument) => setFileId(file.id)} /><textarea value={note} onChange={(e) => setNote(e.target.value)} className="min-h-24 w-full rounded-xl border p-3" placeholder="Ghi chú bản chỉnh sửa" /><button onClick={() => handleSubmit(item.id)} className="rounded-xl bg-blue-600 px-4 py-2 font-semibold text-white">Nộp bản chỉnh sửa</button></div>}<div><h3 className="font-semibold">Lịch sử nộp</h3>{item.submissions?.map((sub) => <p key={sub.id} className="text-sm text-slate-600">Lần {sub.versionNumber} - {new Date(sub.submittedAt).toLocaleString()}</p>)}</div></div>)}</div></>;
+  useEffect(() => { void load(); }, []);
+
+  async function handleSubmit(id: string, values: RevisionSubmissionValues) {
+    await submitRevision(id, values);
+    await load();
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-slate-950">Chỉnh sửa sau bảo vệ</h1>
+        <p className="mt-2 text-sm text-slate-600">Nộp bản chỉnh sửa bằng file upload, hệ thống tự lưu mã file ẩn.</p>
+      </div>
+      {error ? <div className="rounded-xl bg-red-50 p-4 text-red-700">{error}</div> : null}
+      {items.length === 0 ? <div className="rounded-3xl bg-white p-6 shadow-sm">Không có yêu cầu chỉnh sửa.</div> : null}
+      {items.map((item) => {
+        const canSubmit = ['PENDING_SUBMISSION', 'NEEDS_CHANGES'].includes(item.status);
+        return (
+          <div key={item.id} className="space-y-4">
+            <RevisionRequestCard request={item} />
+            {canSubmit ? <RevisionSubmissionForm onSubmit={(values) => handleSubmit(item.id, values)} /> : null}
+            <RevisionSubmissionHistory submissions={item.submissions} />
+          </div>
+        );
+      })}
+    </div>
+  );
 }

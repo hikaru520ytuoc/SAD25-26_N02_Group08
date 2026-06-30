@@ -1,3 +1,4 @@
+import { StatusBadge } from '@/components/common/status-badge';
 import type { DefenseDocument } from '@/types/sprint6';
 
 export function DefenseDocumentStatusCard({ document }: { document: DefenseDocument }) {
@@ -8,12 +9,12 @@ export function DefenseDocumentStatusCard({ document }: { document: DefenseDocum
           <h2 className="text-xl font-bold">Trạng thái hồ sơ</h2>
           <p className="mt-2 text-slate-600">Nộp lúc {new Date(document.submittedAt).toLocaleString()}</p>
         </div>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold">{document.status}</span>
+        <StatusBadge value={document.status} />
       </div>
       {document.secretaryNote ? <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{document.secretaryNote}</p> : null}
       <div className="mt-4 text-sm text-slate-600">
-        <p>Báo cáo: {document.reportFile?.originalName ?? document.reportFileId ?? 'Chưa có'}</p>
-        <p>Slide: {document.slideFile?.originalName ?? document.slideFileId ?? 'Chưa có'}</p>
+        <p>Báo cáo: {document.reportFile?.originalName ?? 'Chưa có'}</p>
+        <p>Slide: {document.slideFile?.originalName ?? 'Chưa có'}</p>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FilesService } from '../files/files.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RecordLockService } from '../record-lock/record-lock.service';
 import { QueryDefenseDocumentDto } from './dto/query-defense-document.dto';
 import { RequestDefenseDocumentSupplementDto } from './dto/request-defense-document-supplement.dto';
 import { ResubmitDefenseDocumentDto } from './dto/resubmit-defense-document.dto';
@@ -18,6 +19,7 @@ export class DefenseDocumentsService {
     private readonly auditLogsService: AuditLogsService,
     private readonly notificationsService: NotificationsService,
     private readonly filesService: FilesService,
+    private readonly recordLockService: RecordLockService,
   ) {}
 
   async findMe(actor: AuthUser) {
@@ -51,6 +53,7 @@ export class DefenseDocumentsService {
     if (!student || schedule.studentId !== student.id) {
       throw new AppException('DEFENSE_DOCUMENT_NOT_FOUND', 'Không tìm thấy lịch bảo vệ của bạn', HttpStatus.NOT_FOUND);
     }
+    await this.recordLockService.checkProjectRecordLocked(schedule.studentId, schedule.projectPeriodId);
     if (schedule.status === DefenseScheduleStatus.CANCELLED) {
       throw new AppException('DEFENSE_DOCUMENT_INVALID_STATUS', 'Không nộp hồ sơ cho lịch đã hủy', HttpStatus.CONFLICT);
     }
@@ -87,6 +90,7 @@ export class DefenseDocumentsService {
   async requestSupplement(id: string, dto: RequestDefenseDocumentSupplementDto, actor: AuthUser) {
     const document = await this.getDocumentOrThrow(id);
     await this.ensureSecretaryOwnsDocument(document, actor);
+    await this.recordLockService.checkProjectRecordLocked(document.studentId, document.defenseSchedule.projectPeriodId);
     if (!dto.secretaryNote?.trim()) {
       throw new AppException('DEFENSE_DOCUMENT_SUPPLEMENT_NOTE_REQUIRED', 'Lý do yêu cầu bổ sung là bắt buộc', HttpStatus.BAD_REQUEST);
     }
@@ -113,6 +117,7 @@ export class DefenseDocumentsService {
     if (!student || document.studentId !== student.id) {
       throw new AppException('DEFENSE_DOCUMENT_NOT_FOUND', 'Không tìm thấy hồ sơ bảo vệ của bạn', HttpStatus.NOT_FOUND);
     }
+    await this.recordLockService.checkProjectRecordLocked(document.studentId, document.defenseSchedule.projectPeriodId);
     if (document.status !== DefenseDocumentStatus.NEEDS_SUPPLEMENT) {
       throw new AppException('DEFENSE_DOCUMENT_INVALID_STATUS', 'Chỉ bổ sung hồ sơ khi thư ký yêu cầu', HttpStatus.CONFLICT);
     }
@@ -139,6 +144,7 @@ export class DefenseDocumentsService {
   async approve(id: string, actor: AuthUser) {
     const document = await this.getDocumentOrThrow(id);
     await this.ensureSecretaryOwnsDocument(document, actor);
+    await this.recordLockService.checkProjectRecordLocked(document.studentId, document.defenseSchedule.projectPeriodId);
     if (!document.reportFileId || !document.slideFileId) {
       throw new AppException('DEFENSE_DOCUMENT_MISSING_REQUIRED_FILE', 'Hồ sơ cần có báo cáo và slide', HttpStatus.BAD_REQUEST);
     }

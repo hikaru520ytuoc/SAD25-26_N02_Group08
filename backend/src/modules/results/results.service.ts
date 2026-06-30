@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ScoresService } from '../scores/scores.service';
+import { RecordLockService } from '../record-lock/record-lock.service';
 import { ConfirmResultDto } from './dto/confirm-result.dto';
 import { QueryResultDto } from './dto/query-result.dto';
 
@@ -18,6 +19,7 @@ export class ResultsService {
     private readonly scoresService: ScoresService,
     private readonly auditLogsService: AuditLogsService,
     private readonly notificationsService: NotificationsService,
+    private readonly recordLockService: RecordLockService,
   ) {}
 
   async findAll(query: QueryResultDto) {
@@ -63,6 +65,7 @@ export class ResultsService {
       include: { defenseSchedule: true },
     });
     if (!registration?.defenseSchedule) throw new AppException('DEFENSE_SCHEDULE_NOT_FOUND', 'Chưa có lịch bảo vệ', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
     const status = summary.finalScore < PASSING_SCORE ? FinalResultStatus.FAILED : FinalResultStatus.PASSED;
     const result = await this.prisma.finalResult.upsert({
       where: { defenseRegistrationId },
@@ -97,6 +100,7 @@ export class ResultsService {
   async confirm(id: string, dto: ConfirmResultDto, actor: AuthUser) {
     const result = await this.prisma.finalResult.findUnique({ where: { id } });
     if (!result) throw new AppException('FINAL_RESULT_NOT_FOUND', 'Không tìm thấy kết quả', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(result.studentId, result.projectPeriodId);
     if (result.publicationStatus === ResultPublicationStatus.PUBLISHED) throw new AppException('FINAL_RESULT_ALREADY_PUBLISHED', 'Kết quả đã được công bố', HttpStatus.CONFLICT);
     if (dto.resultStatus === FinalResultStatus.PASSED_WITH_REVISION && !dto.revisionNote?.trim()) {
       throw new AppException('FINAL_RESULT_INVALID_STATUS', 'Cần nhập ghi chú chỉnh sửa', HttpStatus.BAD_REQUEST);
@@ -120,6 +124,7 @@ export class ResultsService {
   async publish(id: string, actor: AuthUser) {
     const result = await this.prisma.finalResult.findUnique({ where: { id }, include: { student: true } });
     if (!result) throw new AppException('FINAL_RESULT_NOT_FOUND', 'Không tìm thấy kết quả', HttpStatus.NOT_FOUND);
+    await this.recordLockService.checkProjectRecordLocked(result.studentId, result.projectPeriodId);
     if (result.publicationStatus === ResultPublicationStatus.PUBLISHED) throw new AppException('FINAL_RESULT_ALREADY_PUBLISHED', 'Kết quả đã được công bố', HttpStatus.CONFLICT);
     if (result.publicationStatus !== ResultPublicationStatus.CONFIRMED) throw new AppException('FINAL_RESULT_NOT_CONFIRMED', 'Kết quả chưa được xác nhận', HttpStatus.BAD_REQUEST);
     const updated = await this.prisma.finalResult.update({ where: { id }, data: { publicationStatus: ResultPublicationStatus.PUBLISHED, publishedById: actor.id, publishedAt: new Date() }, include: this.resultInclude() });

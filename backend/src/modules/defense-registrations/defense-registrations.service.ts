@@ -6,6 +6,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { FilesService } from '../files/files.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { RecordLockService } from '../record-lock/record-lock.service';
 import { CreateDefenseRegistrationDto } from './dto/create-defense-registration.dto';
 import { QueryDefenseRegistrationDto } from './dto/query-defense-registration.dto';
 import { ResubmitDefenseRegistrationDto } from './dto/resubmit-defense-registration.dto';
@@ -19,6 +20,7 @@ export class DefenseRegistrationsService {
     private readonly auditLogsService: AuditLogsService,
     private readonly notificationsService: NotificationsService,
     private readonly filesService: FilesService,
+    private readonly recordLockService: RecordLockService,
   ) {}
 
   async findMe(actor: AuthUser) {
@@ -71,6 +73,8 @@ export class DefenseRegistrationsService {
       throw new AppException('OUTLINE_NOT_APPROVED', 'Sinh viên chỉ được đăng ký bảo vệ khi đề cương đã được duyệt', HttpStatus.CONFLICT);
     }
 
+    await this.recordLockService.checkProjectRecordLocked(student.id, outline.projectPeriodId);
+
     const existing = await this.prisma.defenseRegistration.findUnique({
       where: { studentId_projectPeriodId: { studentId: student.id, projectPeriodId: outline.projectPeriodId } },
     });
@@ -117,6 +121,8 @@ export class DefenseRegistrationsService {
     if (registration.studentId !== student.id) {
       throw new AppException('DEFENSE_REGISTRATION_NOT_FOUND', 'Không tìm thấy đăng ký bảo vệ của bạn', HttpStatus.NOT_FOUND);
     }
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
+
     const allowed: DefenseRegistrationStatus[] = [DefenseRegistrationStatus.NEEDS_REVISION, DefenseRegistrationStatus.REVIEWER_NEEDS_REVISION];
     if (!allowed.includes(registration.status)) {
       throw new AppException('DEFENSE_REGISTRATION_INVALID_STATUS', 'Chỉ được nộp lại khi hồ sơ bị yêu cầu chỉnh sửa', HttpStatus.CONFLICT);
@@ -156,6 +162,7 @@ export class DefenseRegistrationsService {
 
   async supervisorApprove(id: string, dto: SupervisorApproveDefenseDto, actor: AuthUser) {
     const registration = await this.ensureSupervisorOwnsRegistration(id, actor);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
     this.validateScore(dto.score, 'SUPERVISOR_SCORE_INVALID');
 
     const allowed: DefenseRegistrationStatus[] = [DefenseRegistrationStatus.SUBMITTED, DefenseRegistrationStatus.NEEDS_REVISION];
@@ -194,6 +201,7 @@ export class DefenseRegistrationsService {
 
   async supervisorReject(id: string, dto: SupervisorRejectDefenseDto, actor: AuthUser) {
     const registration = await this.ensureSupervisorOwnsRegistration(id, actor);
+    await this.recordLockService.checkProjectRecordLocked(registration.studentId, registration.projectPeriodId);
     if (!dto.feedback?.trim()) {
       throw new AppException('SUPERVISOR_FEEDBACK_REQUIRED', 'Feedback là bắt buộc khi xác nhận chưa đủ điều kiện', HttpStatus.BAD_REQUEST);
     }

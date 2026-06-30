@@ -3,11 +3,12 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 import { FilesModule } from '../files/files.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { RecordLockModule } from '../record-lock/record-lock.module';
 import { DefenseDocumentsController } from './defense-documents.controller';
 import { DefenseDocumentsService } from './defense-documents.service';
 
 @Module({
-  imports: [JwtModule, AuditLogsModule, NotificationsModule, FilesModule],
+  imports: [JwtModule, AuditLogsModule, NotificationsModule, FilesModule, RecordLockModule],
   controllers: [DefenseDocumentsController],
   providers: [DefenseDocumentsService],
   exports: [DefenseDocumentsService],
