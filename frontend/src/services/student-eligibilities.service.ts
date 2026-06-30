@@ -1,10 +1,17 @@
 import { apiFetch } from '@/lib/api-client';
-import type { EligibilityStatus, InternshipStatus, StudentEligibility } from '@/types/sprint2';
+import type { AcademicStatus, EligibilityStatus, InternshipStatus, StudentEligibility } from '@/types/sprint2';
 
 export type CreateStudentEligibilityInput = {
   studentId: string;
   projectPeriodId: string;
   internshipStatus: InternshipStatus;
+  academicStatus?: AcademicStatus;
+  completedCredits?: number;
+  requiredCredits?: number;
+  gpa?: number;
+  hasPrerequisiteDebt?: boolean;
+  hasTuitionDebt?: boolean;
+  hasDisciplinaryAction?: boolean;
   eligibilityStatus?: EligibilityStatus;
   reason?: string;
 };

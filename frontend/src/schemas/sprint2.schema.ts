@@ -29,7 +29,14 @@ export const studentEligibilitySchema = z.object({
   studentId: z.string().uuid('studentId phải là UUID'),
   projectPeriodId: z.string().uuid('projectPeriodId phải là UUID'),
   internshipStatus: z.enum(['NOT_COMPLETED', 'COMPLETED', 'WAIVED']),
-  eligibilityStatus: z.enum(['PENDING', 'ELIGIBLE', 'NOT_ELIGIBLE']).optional(),
+  academicStatus: z.enum(['ACTIVE', 'SUSPENDED', 'GRADUATED', 'DROPPED']).default('ACTIVE'),
+  completedCredits: z.coerce.number().min(0, 'Tín chỉ đã tích lũy không được âm'),
+  requiredCredits: z.coerce.number().min(0, 'Tín chỉ yêu cầu không được âm'),
+  gpa: z.coerce.number().min(0, 'GPA/CPA không được âm').max(4, 'GPA/CPA tối đa là 4'),
+  hasPrerequisiteDebt: z.boolean().default(false),
+  hasTuitionDebt: z.boolean().default(false),
+  hasDisciplinaryAction: z.boolean().default(false),
+  eligibilityStatus: z.preprocess((value) => (value === '' ? undefined : value), z.enum(['PENDING', 'ELIGIBLE', 'NOT_ELIGIBLE']).optional()),
   reason: z.string().optional(),
 });
 

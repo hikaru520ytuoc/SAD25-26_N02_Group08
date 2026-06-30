@@ -13,6 +13,8 @@ import { UpdateCouncilDto } from './dto/update-council.dto';
 
 @Injectable()
 export class CouncilsService {
+  private readonly minTopicsPerCouncil = 4;
+  private readonly maxTopicsPerCouncil = 6;
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogsService: AuditLogsService,
@@ -56,6 +58,7 @@ export class CouncilsService {
     if (dto.projectPeriodId) await this.ensureProjectPeriodExists(dto.projectPeriodId);
     if (dto.facultyId) await this.ensureFacultyExists(dto.facultyId);
     if (dto.status === DefenseCouncilStatus.ACTIVE) this.ensureCouncilReadyForActivation(council.members);
+    if (dto.status === DefenseCouncilStatus.CLOSED) await this.ensureCouncilTopicCountInRange(id);
 
     const updated = await this.prisma.defenseCouncil.update({
       where: { id },
@@ -166,6 +169,21 @@ export class CouncilsService {
     });
     if (existing) {
       throw new AppException('COUNCIL_INVALID_ROLE', `Hội đồng chỉ được có một ${role}`, HttpStatus.CONFLICT);
+    }
+  }
+
+
+  private async ensureCouncilTopicCountInRange(councilId: string) {
+    const topicCount = await this.prisma.defenseSchedule.count({
+      where: { councilId, status: { not: DefenseScheduleStatus.CANCELLED } },
+    });
+
+    if (topicCount < this.minTopicsPerCouncil || topicCount > this.maxTopicsPerCouncil) {
+      throw new AppException(
+        'COUNCIL_TOPIC_COUNT_INVALID',
+        `Chỉ được chốt hội đồng khi có từ ${this.minTopicsPerCouncil} đến ${this.maxTopicsPerCouncil} đề tài. Hiện tại hội đồng có ${topicCount} đề tài`,
+        HttpStatus.CONFLICT,
+      );
     }
   }
 

@@ -326,9 +326,15 @@ model Student {
   className        String
   major            String
   facultyId        String?
-  internshipStatus InternshipStatus @default(NOT_COMPLETED)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  internshipStatus       InternshipStatus @default(NOT_COMPLETED)
+  completedCredits      Int?
+  requiredCredits       Int?
+  gpa                   Float?
+  hasPrerequisiteDebt   Boolean          @default(false)
+  hasTuitionDebt        Boolean          @default(false)
+  hasDisciplinaryAction Boolean          @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
   user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   faculty               Faculty?               @relation(fields: [facultyId], references: [id], onDelete: SetNull)
@@ -418,11 +424,17 @@ model StudentEligibility {
   id                String            @id @default(uuid())
   studentId         String
   projectPeriodId   String
-  internshipStatus  InternshipStatus
-  academicStatus    AcademicStatus    @default(ACTIVE)
-  eligibilityStatus EligibilityStatus @default(PENDING)
-  reason            String?
-  checkedById       String
+  internshipStatus       InternshipStatus
+  academicStatus         AcademicStatus    @default(ACTIVE)
+  completedCredits       Int?
+  requiredCredits        Int?
+  gpa                    Float?
+  hasPrerequisiteDebt    Boolean           @default(false)
+  hasTuitionDebt         Boolean           @default(false)
+  hasDisciplinaryAction  Boolean           @default(false)
+  eligibilityStatus      EligibilityStatus @default(PENDING)
+  reason                 String?
+  checkedById            String
   checkedAt         DateTime?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt

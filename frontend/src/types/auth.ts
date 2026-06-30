@@ -21,6 +21,18 @@ export type UserListItem = {
   avatarUrl?: string | null;
   status: 'ACTIVE' | 'LOCKED';
   roles: Role[];
+  student?: {
+    id: string;
+    studentCode: string;
+    className: string;
+    major: string;
+    completedCredits?: number | null;
+    requiredCredits?: number | null;
+    gpa?: number | null;
+    hasPrerequisiteDebt: boolean;
+    hasTuitionDebt: boolean;
+    hasDisciplinaryAction: boolean;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };

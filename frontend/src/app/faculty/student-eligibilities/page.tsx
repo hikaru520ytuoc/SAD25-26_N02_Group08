@@ -53,7 +53,7 @@ export default function FacultyStudentEligibilitiesPage() {
       <div className="space-y-6">
         <div className="rounded-3xl bg-white p-8 shadow-sm">
           <h1 className="text-3xl font-bold text-slate-950">Danh sách sinh viên đủ điều kiện</h1>
-          <p className="mt-2 text-slate-600">Hệ thống chỉ dùng trạng thái hoàn thành thực tập làm điều kiện đầu vào.</p>
+          <p className="mt-2 text-slate-600">Hệ thống xét điều kiện từ dữ liệu nhập thủ công: thực tập, học vụ, tín chỉ, GPA/CPA, nợ môn tiên quyết, nợ học phí và kỷ luật.</p>
         </div>
         {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
         <StudentEligibilityForm onSubmit={handleCreate} loading={saving} />

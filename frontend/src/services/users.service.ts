@@ -16,6 +16,22 @@ export type CreateUserInput = {
   password: string;
   phone?: string;
   roleIds?: string[];
+  studentProfile?: {
+    studentCode?: string;
+    className?: string;
+    major?: string;
+    facultyId?: string;
+    projectPeriodId?: string;
+    internshipStatus?: 'NOT_COMPLETED' | 'COMPLETED' | 'WAIVED';
+    academicStatus?: 'ACTIVE' | 'SUSPENDED' | 'GRADUATED' | 'DROPPED';
+    completedCredits?: number;
+    requiredCredits?: number;
+    gpa?: number;
+    hasPrerequisiteDebt?: boolean;
+    hasTuitionDebt?: boolean;
+    hasDisciplinaryAction?: boolean;
+    reason?: string;
+  };
 };
 
 export function getUsers() {

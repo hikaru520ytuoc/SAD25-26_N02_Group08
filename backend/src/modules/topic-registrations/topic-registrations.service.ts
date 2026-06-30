@@ -13,6 +13,7 @@ import {
   TopicStatus,
 } from '@prisma/client';
 import { AppException } from '../../common/exceptions/app.exception';
+import { evaluateStudentEligibility } from '../../common/utils/student-eligibility.util';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -481,6 +482,25 @@ export class TopicRegistrationsService {
 
     if (!eligibility || eligibility.eligibilityStatus !== EligibilityStatus.ELIGIBLE) {
       throw new AppException('STUDENT_NOT_ELIGIBLE', 'Sinh viên chưa đủ điều kiện đăng ký đề tài', HttpStatus.FORBIDDEN);
+    }
+
+    const evaluation = evaluateStudentEligibility({
+      internshipStatus: eligibility.internshipStatus,
+      academicStatus: eligibility.academicStatus,
+      completedCredits: eligibility.completedCredits,
+      requiredCredits: eligibility.requiredCredits,
+      gpa: eligibility.gpa,
+      hasPrerequisiteDebt: eligibility.hasPrerequisiteDebt,
+      hasTuitionDebt: eligibility.hasTuitionDebt,
+      hasDisciplinaryAction: eligibility.hasDisciplinaryAction,
+    });
+
+    if (!evaluation.eligible) {
+      throw new AppException(
+        'STUDENT_ELIGIBILITY_CONDITION_FAILED',
+        `Sinh viên chưa đủ điều kiện đăng ký đề tài: ${evaluation.reasons.join('; ')}`,
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 

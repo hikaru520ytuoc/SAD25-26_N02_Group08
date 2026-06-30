@@ -11,6 +11,7 @@ import { UpdateDefenseScheduleDto } from './dto/update-defense-schedule.dto';
 
 @Injectable()
 export class DefenseSchedulesService {
+  private readonly maxTopicsPerCouncil = 6;
   constructor(
     private readonly prisma: PrismaService,
     private readonly auditLogsService: AuditLogsService,
@@ -77,6 +78,7 @@ export class DefenseSchedulesService {
     const startTime = new Date(dto.startTime);
     const endTime = new Date(dto.endTime);
     this.validateTime(startTime, endTime);
+    await this.ensureCouncilCanReceiveTopic(dto.councilId);
     await this.ensureNoConflict(dto.councilId, dto.room, startTime, endTime);
 
     const schedule = await this.prisma.defenseSchedule.create({
@@ -127,6 +129,7 @@ export class DefenseSchedulesService {
     const startTime = dto.startTime ? new Date(dto.startTime) : schedule.startTime;
     const endTime = dto.endTime ? new Date(dto.endTime) : schedule.endTime;
     this.validateTime(startTime, endTime);
+    await this.ensureCouncilCanReceiveTopic(councilId, id);
     await this.ensureNoConflict(councilId, room, startTime, endTime, id);
 
     if (dto.councilId) {
@@ -171,8 +174,26 @@ export class DefenseSchedulesService {
     }
   }
 
+  private async ensureCouncilCanReceiveTopic(councilId: string, excludeScheduleId?: string) {
+    const currentTopicCount = await this.prisma.defenseSchedule.count({
+      where: {
+        councilId,
+        id: excludeScheduleId ? { not: excludeScheduleId } : undefined,
+        status: { not: DefenseScheduleStatus.CANCELLED },
+      },
+    });
+
+    if (currentTopicCount >= this.maxTopicsPerCouncil) {
+      throw new AppException(
+        'COUNCIL_TOPIC_LIMIT_EXCEEDED',
+        `Một hội đồng chỉ được xếp tối đa ${this.maxTopicsPerCouncil} đề tài`,
+        HttpStatus.CONFLICT,
+      );
+    }
+  }
+
   private async ensureNoConflict(councilId: string, room: string, startTime: Date, endTime: Date, excludeId?: string) {
-    const conflict = await this.prisma.defenseSchedule.findFirst({
+    const roomOrCouncilConflict = await this.prisma.defenseSchedule.findFirst({
       where: {
         id: excludeId ? { not: excludeId } : undefined,
         status: { not: DefenseScheduleStatus.CANCELLED },
@@ -180,8 +201,59 @@ export class DefenseSchedulesService {
         startTime: { lt: endTime },
         endTime: { gt: startTime },
       },
+      include: { council: true },
     });
-    if (conflict) throw new AppException('DEFENSE_SCHEDULE_CONFLICT', 'Trùng lịch theo phòng hoặc hội đồng', HttpStatus.CONFLICT);
+    if (roomOrCouncilConflict) {
+      throw new AppException(
+        'DEFENSE_SCHEDULE_CONFLICT',
+        'Trùng lịch theo phòng hoặc hội đồng trong cùng khoảng thời gian',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const members = await this.prisma.councilMember.findMany({
+      where: { councilId },
+      select: { lecturerId: true, lecturer: { include: { user: true } } },
+    });
+    const lecturerIds = members.map((member) => member.lecturerId);
+    if (!lecturerIds.length) return;
+
+    const memberConflict = await this.prisma.defenseSchedule.findFirst({
+      where: {
+        id: excludeId ? { not: excludeId } : undefined,
+        status: { not: DefenseScheduleStatus.CANCELLED },
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+        council: {
+          members: {
+            some: {
+              lecturerId: { in: lecturerIds },
+            },
+          },
+        },
+      },
+      include: {
+        council: {
+          include: {
+            members: {
+              where: { lecturerId: { in: lecturerIds } },
+              include: { lecturer: { include: { user: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (memberConflict) {
+      const conflictMemberNames = memberConflict.council.members
+        .map((member) => member.lecturer.user.fullName)
+        .join(', ');
+      throw new AppException(
+        'COUNCIL_MEMBER_TIME_CONFLICT',
+        `Không thể xếp lịch vì thành viên hội đồng bị trùng thời gian: ${conflictMemberNames}`,
+        HttpStatus.CONFLICT,
+      );
+    }
   }
 
   private ensureCouncilHasChairAndSecretary(members: { roleInCouncil: string }[]) {

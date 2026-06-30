@@ -7,6 +7,12 @@ import {
   Prisma,
 } from '@prisma/client';
 import { AppException } from '../../common/exceptions/app.exception';
+import {
+  buildEligibilityReason,
+  evaluateStudentEligibility,
+  resolveEligibilityStatusFromEvaluation,
+  StudentEligibilityEvaluationInput,
+} from '../../common/utils/student-eligibility.util';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -86,24 +92,57 @@ export class StudentEligibilitiesService {
       throw new AppException('STUDENT_ELIGIBILITY_EXISTS', 'Sinh viên đã có trạng thái đủ điều kiện trong đợt này', HttpStatus.CONFLICT);
     }
 
-    const eligibilityStatus = this.resolveEligibilityStatus(dto.internshipStatus, dto.eligibilityStatus);
+    const input = this.buildEvaluationInput({
+      internshipStatus: dto.internshipStatus,
+      academicStatus: dto.academicStatus ?? AcademicStatus.ACTIVE,
+      completedCredits: dto.completedCredits ?? student.completedCredits,
+      requiredCredits: dto.requiredCredits ?? student.requiredCredits,
+      gpa: dto.gpa ?? student.gpa,
+      hasPrerequisiteDebt: dto.hasPrerequisiteDebt ?? student.hasPrerequisiteDebt,
+      hasTuitionDebt: dto.hasTuitionDebt ?? student.hasTuitionDebt,
+      hasDisciplinaryAction: dto.hasDisciplinaryAction ?? student.hasDisciplinaryAction,
+    });
+    const eligibilityStatus = this.resolveEligibilityStatus(input, dto.eligibilityStatus);
+    const evaluation = evaluateStudentEligibility(input);
+    const reason = buildEligibilityReason(dto.reason, evaluation);
 
-    const item = await this.prisma.studentEligibility.create({
-      data: {
-        studentId: dto.studentId,
-        projectPeriodId: dto.projectPeriodId,
-        internshipStatus: dto.internshipStatus,
-        academicStatus: dto.academicStatus ?? AcademicStatus.ACTIVE,
-        eligibilityStatus,
-        reason: dto.reason,
-        checkedById: actor.id,
-        checkedAt: new Date(),
-      },
-      include: {
-        student: { include: { user: { select: { id: true, email: true, fullName: true } }, faculty: true } },
-        projectPeriod: true,
-        checkedBy: { select: { id: true, email: true, fullName: true } },
-      },
+    const item = await this.prisma.$transaction(async (tx) => {
+      await tx.student.update({
+        where: { id: dto.studentId },
+        data: {
+          internshipStatus: input.internshipStatus,
+          completedCredits: input.completedCredits,
+          requiredCredits: input.requiredCredits,
+          gpa: input.gpa,
+          hasPrerequisiteDebt: Boolean(input.hasPrerequisiteDebt),
+          hasTuitionDebt: Boolean(input.hasTuitionDebt),
+          hasDisciplinaryAction: Boolean(input.hasDisciplinaryAction),
+        },
+      });
+
+      return tx.studentEligibility.create({
+        data: {
+          studentId: dto.studentId,
+          projectPeriodId: dto.projectPeriodId,
+          internshipStatus: input.internshipStatus,
+          academicStatus: input.academicStatus ?? AcademicStatus.ACTIVE,
+          completedCredits: input.completedCredits,
+          requiredCredits: input.requiredCredits,
+          gpa: input.gpa,
+          hasPrerequisiteDebt: Boolean(input.hasPrerequisiteDebt),
+          hasTuitionDebt: Boolean(input.hasTuitionDebt),
+          hasDisciplinaryAction: Boolean(input.hasDisciplinaryAction),
+          eligibilityStatus,
+          reason,
+          checkedById: actor.id,
+          checkedAt: new Date(),
+        },
+        include: {
+          student: { include: { user: { select: { id: true, email: true, fullName: true } }, faculty: true } },
+          projectPeriod: true,
+          checkedBy: { select: { id: true, email: true, fullName: true } },
+        },
+      });
     });
 
     await this.auditLogsService.create({
@@ -120,24 +159,56 @@ export class StudentEligibilitiesService {
 
   async update(id: string, dto: UpdateStudentEligibilityDto, actor: AuthUser) {
     const current = await this.findOne(id);
-    const internshipStatus = dto.internshipStatus ?? current.internshipStatus;
-    const eligibilityStatus = this.resolveEligibilityStatus(internshipStatus, dto.eligibilityStatus ?? current.eligibilityStatus);
+    const input = this.buildEvaluationInput({
+      internshipStatus: dto.internshipStatus ?? current.internshipStatus,
+      academicStatus: dto.academicStatus ?? current.academicStatus,
+      completedCredits: dto.completedCredits ?? current.completedCredits,
+      requiredCredits: dto.requiredCredits ?? current.requiredCredits,
+      gpa: dto.gpa ?? current.gpa,
+      hasPrerequisiteDebt: dto.hasPrerequisiteDebt ?? current.hasPrerequisiteDebt,
+      hasTuitionDebt: dto.hasTuitionDebt ?? current.hasTuitionDebt,
+      hasDisciplinaryAction: dto.hasDisciplinaryAction ?? current.hasDisciplinaryAction,
+    });
+    const eligibilityStatus = this.resolveEligibilityStatus(input, dto.eligibilityStatus ?? current.eligibilityStatus);
+    const evaluation = evaluateStudentEligibility(input);
+    const reason = buildEligibilityReason(dto.reason ?? current.reason ?? undefined, evaluation);
 
-    const item = await this.prisma.studentEligibility.update({
-      where: { id },
-      data: {
-        ...(dto.internshipStatus !== undefined ? { internshipStatus: dto.internshipStatus } : {}),
-        ...(dto.academicStatus !== undefined ? { academicStatus: dto.academicStatus } : {}),
-        eligibilityStatus,
-        ...(dto.reason !== undefined ? { reason: dto.reason } : {}),
-        checkedById: actor.id,
-        checkedAt: new Date(),
-      },
-      include: {
-        student: { include: { user: { select: { id: true, email: true, fullName: true } }, faculty: true } },
-        projectPeriod: true,
-        checkedBy: { select: { id: true, email: true, fullName: true } },
-      },
+    const item = await this.prisma.$transaction(async (tx) => {
+      await tx.student.update({
+        where: { id: current.studentId },
+        data: {
+          internshipStatus: input.internshipStatus,
+          completedCredits: input.completedCredits,
+          requiredCredits: input.requiredCredits,
+          gpa: input.gpa,
+          hasPrerequisiteDebt: Boolean(input.hasPrerequisiteDebt),
+          hasTuitionDebt: Boolean(input.hasTuitionDebt),
+          hasDisciplinaryAction: Boolean(input.hasDisciplinaryAction),
+        },
+      });
+
+      return tx.studentEligibility.update({
+        where: { id },
+        data: {
+          internshipStatus: input.internshipStatus,
+          academicStatus: input.academicStatus ?? AcademicStatus.ACTIVE,
+          completedCredits: input.completedCredits,
+          requiredCredits: input.requiredCredits,
+          gpa: input.gpa,
+          hasPrerequisiteDebt: Boolean(input.hasPrerequisiteDebt),
+          hasTuitionDebt: Boolean(input.hasTuitionDebt),
+          hasDisciplinaryAction: Boolean(input.hasDisciplinaryAction),
+          eligibilityStatus,
+          reason,
+          checkedById: actor.id,
+          checkedAt: new Date(),
+        },
+        include: {
+          student: { include: { user: { select: { id: true, email: true, fullName: true } }, faculty: true } },
+          projectPeriod: true,
+          checkedBy: { select: { id: true, email: true, fullName: true } },
+        },
+      });
     });
 
     await this.auditLogsService.create({
@@ -152,18 +223,26 @@ export class StudentEligibilitiesService {
     return item;
   }
 
-  private resolveEligibilityStatus(internshipStatus: InternshipStatus, requestedStatus?: EligibilityStatus) {
-    if (internshipStatus === InternshipStatus.NOT_COMPLETED) {
-      if (requestedStatus === EligibilityStatus.ELIGIBLE) {
-        throw new AppException(
-          'STUDENT_NOT_INTERNSHIP_COMPLETED',
-          'Sinh viên chưa hoàn thành thực tập nên không thể đánh dấu đủ điều kiện',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      return EligibilityStatus.NOT_ELIGIBLE;
+  private buildEvaluationInput(input: StudentEligibilityEvaluationInput): StudentEligibilityEvaluationInput {
+    return {
+      ...input,
+      academicStatus: input.academicStatus ?? AcademicStatus.ACTIVE,
+      hasPrerequisiteDebt: Boolean(input.hasPrerequisiteDebt),
+      hasTuitionDebt: Boolean(input.hasTuitionDebt),
+      hasDisciplinaryAction: Boolean(input.hasDisciplinaryAction),
+    };
+  }
+
+  private resolveEligibilityStatus(input: StudentEligibilityEvaluationInput, requestedStatus?: EligibilityStatus) {
+    const evaluation = evaluateStudentEligibility(input);
+    if (requestedStatus === EligibilityStatus.ELIGIBLE && !evaluation.eligible) {
+      throw new AppException(
+        'STUDENT_ELIGIBILITY_CONDITION_FAILED',
+        `Không thể đánh dấu đủ điều kiện: ${evaluation.reasons.join('; ')}`,
+        HttpStatus.BAD_REQUEST,
+      );
     }
 
-    return requestedStatus ?? EligibilityStatus.ELIGIBLE;
+    return resolveEligibilityStatusFromEvaluation(evaluation, requestedStatus);
   }
 }

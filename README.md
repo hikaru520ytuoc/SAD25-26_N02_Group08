@@ -335,3 +335,19 @@ Không dùng `down -v` trên dữ liệu thật.
 ## 21. Ghi chú code freeze
 
 Sprint 9 là bản MVP code freeze trước Giai đoạn 7. Không thêm chức năng lớn mới sau thời điểm này nếu chưa được ghi nhận là change request. Các lỗi phát hiện trong Giai đoạn 7 cần được phân loại thành blocker, major, minor hoặc improvement.
+
+## Eligibility and Council Validation Patch
+
+Bản vá này bổ sung hai nhóm kiểm tra nghiệp vụ:
+
+1. **Kiểm tra điều kiện làm đồ án bằng dữ liệu nhập thủ công**: khi Admin tạo tài khoản sinh viên, hệ thống cho nhập mã sinh viên, lớp, ngành, đợt đồ án, thực tập, trạng thái học vụ, số tín chỉ đã tích lũy, số tín chỉ yêu cầu, GPA/CPA, nợ môn tiên quyết, nợ học phí và tình trạng kỷ luật. Backend tự tạo hồ sơ sinh viên và bản ghi xét điều kiện trong `student_eligibilities`.
+2. **Kiểm tra hội đồng bảo vệ**: một hội đồng tối đa 6 đề tài khi xếp lịch, khi chốt/đóng hội đồng phải có từ 4 đến 6 đề tài, đồng thời kiểm tra xung đột thời gian nếu thành viên tham gia nhiều hội đồng.
+
+Các trang liên quan:
+
+```text
+/admin/users
+/faculty/student-eligibilities
+/faculty/councils
+/faculty/defense-schedules
+```
