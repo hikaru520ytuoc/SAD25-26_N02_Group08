@@ -99,7 +99,21 @@ export class AuthService {
   }
 
   async getMe(user: AuthUser) {
-    return user;
+    const freshUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        student: true,
+        lecturer: true,
+        userRoles: { include: { role: true } },
+      },
+    });
+
+    if (!freshUser) return user;
+
+    return this.toAuthUser(
+      freshUser,
+      freshUser.userRoles.map((userRole) => userRole.role.code),
+    );
   }
 
   private async logLoginFailed(
@@ -117,13 +131,39 @@ export class AuthService {
     });
   }
 
-  private toAuthUser(user: User, roles: string[]): AuthUser {
+  private toAuthUser(user: User & { student?: any; lecturer?: any }, roles: string[]): AuthUser {
     return {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
+      phone: user.phone,
+      avatarUrl: user.avatarUrl,
       status: user.status,
       roles,
+      student: user.student
+        ? {
+            id: user.student.id,
+            studentCode: user.student.studentCode,
+            className: user.student.className,
+            major: user.student.major,
+            internshipStatus: user.student.internshipStatus,
+            completedCredits: user.student.completedCredits,
+            requiredCredits: user.student.requiredCredits,
+            gpa: user.student.gpa,
+            hasPrerequisiteDebt: user.student.hasPrerequisiteDebt,
+            hasTuitionDebt: user.student.hasTuitionDebt,
+            hasDisciplinaryAction: user.student.hasDisciplinaryAction,
+          }
+        : null,
+      lecturer: user.lecturer
+        ? {
+            id: user.lecturer.id,
+            lecturerCode: user.lecturer.lecturerCode,
+            academicTitle: user.lecturer.academicRank,
+            specialization: user.lecturer.department,
+            maxStudents: user.lecturer.maxSupervisedStudents,
+          }
+        : null,
     };
   }
 }

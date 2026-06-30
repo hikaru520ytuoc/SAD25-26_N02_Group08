@@ -1,8 +1,11 @@
 'use client';
 
-import Link from 'next/link';
+import { AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AppShell } from '@/components/layout/app-shell';
+import { PageHeader } from '@/components/common/page-header';
+import { LoadingState } from '@/components/common/loading-state';
+import { ErrorState } from '@/components/common/error-state';
 import { DefenseScheduleForm } from '@/components/sprint6/defense-schedule-form';
 import { DefenseScheduleTable } from '@/components/sprint6/defense-schedule-table';
 import { createDefenseSchedule, getDefenseSchedules } from '@/services/defense-schedules.service';
@@ -35,10 +38,14 @@ export default function FacultyDefenseSchedulesPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-slate-950">Lập lịch bảo vệ</h1><p className="mt-2 text-slate-600">Chỉ xếp lịch cho hồ sơ đã READY_FOR_COUNCIL hoặc APPROVED_BY_REVIEWER.</p></div><Link href="/dashboard" className="rounded-xl border px-4 py-2 text-sm font-semibold">Dashboard</Link></div>
+        <PageHeader title="Lập lịch bảo vệ" description="Chỉ xếp lịch cho hồ sơ đã sẵn sàng. Backend kiểm tra hội đồng tối đa 6 đề tài, trùng phòng, trùng hội đồng và trùng thành viên hội đồng." />
+        <div className="rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          <AlertTriangle className="mr-2 inline h-4 w-4" />
+          Nếu một giảng viên nằm ở hai hội đồng, hệ thống sẽ chặn lịch mới khi khoảng thời gian bị giao nhau theo điều kiện: newStartTime &lt; existingEndTime và newEndTime &gt; existingStartTime.
+        </div>
         <DefenseScheduleForm onSubmit={submit} />
-        {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : null}
-        {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
+        {loading && <LoadingState />}
+        {error && <ErrorState message={error} />}
         <DefenseScheduleTable schedules={items} />
       </div>
     </AppShell>
