@@ -342,7 +342,7 @@ Bản vá này bổ sung hai nhóm kiểm tra nghiệp vụ:
 
 1. **Kiểm tra điều kiện làm đồ án bằng dữ liệu nhập thủ công**: khi Admin tạo tài khoản sinh viên, hệ thống cho nhập mã sinh viên, lớp, ngành, đợt đồ án, thực tập, trạng thái học vụ, số tín chỉ đã tích lũy, số tín chỉ yêu cầu, GPA/CPA, nợ môn tiên quyết, nợ học phí và tình trạng kỷ luật. Backend tự tạo hồ sơ sinh viên và bản ghi xét điều kiện trong `student_eligibilities`.
 2. **Kiểm tra hội đồng bảo vệ**: một hội đồng tối đa 6 đề tài khi xếp lịch, khi chốt/đóng hội đồng phải có từ 4 đến 6 đề tài, đồng thời kiểm tra xung đột thời gian nếu thành viên tham gia nhiều hội đồng.
-
+...
 Các trang liên quan:
 
 ```text
