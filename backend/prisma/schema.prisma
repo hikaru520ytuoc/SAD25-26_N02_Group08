@@ -37,11 +37,12 @@ enum ProjectPeriodStatus {
   ARCHIVED
 }
 
-enum EligibilityStatus {
-  PENDING
-  ELIGIBLE
-  NOT_ELIGIBLE
+enum ProjectPeriodRegistrationStatus {
+  REGISTERED
+  CANCELLED
+  COMPLETED
 }
+
 
 enum TopicStatus {
   DRAFT
@@ -232,7 +233,6 @@ model User {
   lecturer  Lecturer?
 
   createdProjectPeriods ProjectPeriod[] @relation("ProjectPeriodCreator")
-  checkedEligibilities   StudentEligibility[] @relation("EligibilityChecker")
   approvedTopics         Topic[] @relation("TopicApprover")
   confirmedRegistrations TopicRegistration[] @relation("RegistrationConfirmer")
   assignedSupervisors    SupervisorAssignment[] @relation("SupervisorAssignmentAssigner")
@@ -319,41 +319,56 @@ model Faculty {
   @@map("faculties")
 }
 
+model Major {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  name         String
+  totalCredits Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  students Student[]
+
+  @@map("majors")
+}
+
 model Student {
-  id               String           @id @default(uuid())
-  userId           String           @unique
-  studentCode      String           @unique
-  className        String
-  major            String
-  facultyId        String?
-  internshipStatus       InternshipStatus @default(NOT_COMPLETED)
-  completedCredits      Int?
-  requiredCredits       Int?
-  gpa                   Float?
+  id                    String           @id @default(uuid())
+  userId                String           @unique
+  studentCode           String           @unique
+  className             String
+  majorId               String
+  facultyId             String?
+  internshipStatus      InternshipStatus @default(NOT_COMPLETED)
+  academicStatus        AcademicStatus   @default(ACTIVE)
+  accumulatedCredits    Int              @default(0)
+  gpa                    Float            @default(0)
   hasPrerequisiteDebt   Boolean          @default(false)
   hasTuitionDebt        Boolean          @default(false)
   hasDisciplinaryAction Boolean          @default(false)
   createdAt             DateTime         @default(now())
   updatedAt             DateTime         @updatedAt
 
-  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  faculty               Faculty?               @relation(fields: [facultyId], references: [id], onDelete: SetNull)
-  eligibilities         StudentEligibility[]
-  topicRegistrations    TopicRegistration[]
-  supervisorAssignments SupervisorAssignment[]
-  outlines              Outline[]
-  projectProgresses     ProjectProgress[]
-  defenseRegistrations DefenseRegistration[]
-  reviewerAssignments  ReviewerAssignment[]
-  defenseSchedules     DefenseSchedule[]
-  defenseDocuments     DefenseDocument[]
-  finalResults         FinalResult[]
-  revisionRequests     RevisionRequest[]
-  revisionSubmissions  RevisionSubmission[]
-  archiveRecords       ArchiveRecord[]
-  projectRecordLocks   ProjectRecordLock[]
-  proposedTopics        Topic[]                @relation("TopicProposedByStudent")
+  user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  major                      Major                       @relation(fields: [majorId], references: [id], onDelete: Restrict)
+  faculty                    Faculty?                    @relation(fields: [facultyId], references: [id], onDelete: SetNull)
+  projectPeriodRegistrations ProjectPeriodRegistration[]
+  topicRegistrations         TopicRegistration[]
+  supervisorAssignments      SupervisorAssignment[]
+  outlines                   Outline[]
+  projectProgresses          ProjectProgress[]
+  defenseRegistrations       DefenseRegistration[]
+  reviewerAssignments        ReviewerAssignment[]
+  defenseSchedules           DefenseSchedule[]
+  defenseDocuments           DefenseDocument[]
+  finalResults               FinalResult[]
+  revisionRequests           RevisionRequest[]
+  revisionSubmissions        RevisionSubmission[]
+  archiveRecords             ArchiveRecord[]
+  projectRecordLocks         ProjectRecordLock[]
+  proposedTopics             Topic[]                     @relation("TopicProposedByStudent")
 
+  @@index([majorId])
   @@map("students")
 }
 
@@ -401,50 +416,42 @@ model ProjectPeriod {
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
-  createdBy             User                   @relation("ProjectPeriodCreator", fields: [createdById], references: [id], onDelete: Restrict)
-  eligibilities         StudentEligibility[]
-  topics                Topic[]
-  topicRegistrations    TopicRegistration[]
-  supervisorAssignments SupervisorAssignment[]
-  outlines              Outline[]
-  projectProgresses     ProjectProgress[]
-  defenseRegistrations  DefenseRegistration[]
-  reviewerAssignments   ReviewerAssignment[]
-  defenseCouncils       DefenseCouncil[]
-  defenseSchedules      DefenseSchedule[]
-  finalResults          FinalResult[]
-  revisionRequests      RevisionRequest[]
-  archiveRecords        ArchiveRecord[]
-  projectRecordLocks    ProjectRecordLock[]
+  createdBy                   User                        @relation("ProjectPeriodCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  projectPeriodRegistrations  ProjectPeriodRegistration[]
+  topics                      Topic[]
+  topicRegistrations          TopicRegistration[]
+  supervisorAssignments       SupervisorAssignment[]
+  outlines                     Outline[]
+  projectProgresses            ProjectProgress[]
+  defenseRegistrations         DefenseRegistration[]
+  reviewerAssignments          ReviewerAssignment[]
+  defenseCouncils              DefenseCouncil[]
+  defenseSchedules             DefenseSchedule[]
+  finalResults                 FinalResult[]
+  revisionRequests             RevisionRequest[]
+  archiveRecords               ArchiveRecord[]
+  projectRecordLocks           ProjectRecordLock[]
 
   @@map("project_periods")
 }
 
-model StudentEligibility {
-  id                String            @id @default(uuid())
-  studentId         String
-  projectPeriodId   String
-  internshipStatus       InternshipStatus
-  academicStatus         AcademicStatus    @default(ACTIVE)
-  completedCredits       Int?
-  requiredCredits        Int?
-  gpa                    Float?
-  hasPrerequisiteDebt    Boolean           @default(false)
-  hasTuitionDebt         Boolean           @default(false)
-  hasDisciplinaryAction  Boolean           @default(false)
-  eligibilityStatus      EligibilityStatus @default(PENDING)
-  reason                 String?
-  checkedById            String
-  checkedAt         DateTime?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+model ProjectPeriodRegistration {
+  id              String                          @id @default(uuid())
+  studentId       String
+  projectPeriodId String
+  status          ProjectPeriodRegistrationStatus @default(REGISTERED)
+  registeredAt    DateTime                        @default(now())
+  cancelledAt     DateTime?
+  createdAt       DateTime                        @default(now())
+  updatedAt       DateTime                        @updatedAt
 
   student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   projectPeriod ProjectPeriod @relation(fields: [projectPeriodId], references: [id], onDelete: Cascade)
-  checkedBy     User          @relation("EligibilityChecker", fields: [checkedById], references: [id], onDelete: Restrict)
 
   @@unique([studentId, projectPeriodId])
-  @@map("student_eligibilities")
+  @@index([studentId, status])
+  @@index([projectPeriodId, status])
+  @@map("project_period_registrations")
 }
 
 model Topic {

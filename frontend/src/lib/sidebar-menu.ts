@@ -82,10 +82,11 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   {
     title: 'Đợt đồ án & điều kiện',
     icon: CheckSquare,
-    roles: ['FACULTY_MANAGER', 'ADMIN'],
+    roles: ['STUDENT', 'FACULTY_MANAGER', 'ADMIN'],
     items: [
       { title: 'Đợt đồ án', href: '/faculty/project-periods', roles: ['FACULTY_MANAGER', 'ADMIN'] },
-      { title: 'Sinh viên đủ điều kiện', href: '/faculty/student-eligibilities', roles: ['FACULTY_MANAGER', 'ADMIN'] },
+      { title: 'Điều kiện đăng ký', href: '/faculty/academic-eligibility', roles: ['FACULTY_MANAGER', 'ADMIN'] },
+      { title: 'Đăng ký đợt đồ án', href: '/student/project-period-registration', roles: ['STUDENT'] },
     ],
   },
   {

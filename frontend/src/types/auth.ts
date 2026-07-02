@@ -5,6 +5,49 @@ export type Role = {
   description?: string | null;
 };
 
+export type Major = {
+  id: string;
+  code: string;
+  name: string;
+  totalCredits: number;
+};
+
+export type StudentAcademicEligibility = {
+  eligible: boolean;
+  requiredCredits: number;
+  creditRatio: number;
+  minimumGpa: number;
+  checks: {
+    credits: boolean;
+    gpa: boolean;
+    internship: boolean;
+    academicStatus: boolean;
+    prerequisiteDebt: boolean;
+    tuitionDebt: boolean;
+    disciplinaryAction: boolean;
+    accountStatus: boolean;
+  };
+  reasons: string[];
+};
+
+export type StudentProfile = {
+  id: string;
+  studentCode: string;
+  className: string;
+  majorId: string;
+  major: Major;
+  facultyId?: string | null;
+  faculty?: { id: string; code: string; name: string } | null;
+  internshipStatus: 'NOT_COMPLETED' | 'COMPLETED' | 'WAIVED';
+  academicStatus: 'ACTIVE' | 'SUSPENDED' | 'GRADUATED' | 'DROPPED';
+  accumulatedCredits: number;
+  gpa: number;
+  hasPrerequisiteDebt: boolean;
+  hasTuitionDebt: boolean;
+  hasDisciplinaryAction: boolean;
+  eligibility?: StudentAcademicEligibility;
+};
+
 export type AuthUser = {
   id: string;
   email: string;
@@ -13,19 +56,7 @@ export type AuthUser = {
   roles: string[];
   phone?: string | null;
   avatarUrl?: string | null;
-  student?: {
-    id?: string;
-    studentCode?: string;
-    className?: string;
-    major?: string;
-    internshipStatus?: string | null;
-    completedCredits?: number | null;
-    requiredCredits?: number | null;
-    gpa?: number | null;
-    hasPrerequisiteDebt?: boolean;
-    hasTuitionDebt?: boolean;
-    hasDisciplinaryAction?: boolean;
-  } | null;
+  student?: StudentProfile | null;
   lecturer?: {
     id?: string;
     lecturerCode?: string;
@@ -45,18 +76,7 @@ export type UserListItem = {
   avatarUrl?: string | null;
   status: 'ACTIVE' | 'LOCKED';
   roles: Role[];
-  student?: {
-    id: string;
-    studentCode: string;
-    className: string;
-    major: string;
-    completedCredits?: number | null;
-    requiredCredits?: number | null;
-    gpa?: number | null;
-    hasPrerequisiteDebt: boolean;
-    hasTuitionDebt: boolean;
-    hasDisciplinaryAction: boolean;
-  } | null;
+  student?: StudentProfile | null;
   lecturer?: {
     id: string;
     lecturerCode: string;

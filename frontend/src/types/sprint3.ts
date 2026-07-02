@@ -43,7 +43,7 @@ export type TopicRegistration = {
     id: string;
     studentCode: string;
     className: string;
-    major: string;
+    major: { id: string; code: string; name: string; totalCredits: number };
     user: { id: string; email: string; fullName: string };
   };
   projectPeriod: ProjectPeriod;

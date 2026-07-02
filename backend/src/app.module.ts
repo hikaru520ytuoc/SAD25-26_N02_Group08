@@ -6,7 +6,8 @@ import { HealthModule } from './modules/health/health.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { UsersModule } from './modules/users/users.module';
 import { ProjectPeriodsModule } from './modules/project-periods/project-periods.module';
-import { StudentEligibilitiesModule } from './modules/student-eligibilities/student-eligibilities.module';
+import { StudentsModule } from './modules/students/students.module';
+import { ProjectPeriodRegistrationsModule } from './modules/project-period-registrations/project-period-registrations.module';
 import { TopicsModule } from './modules/topics/topics.module';
 import { TopicRegistrationsModule } from './modules/topic-registrations/topic-registrations.module';
 import { SupervisorAssignmentsModule } from './modules/supervisor-assignments/supervisor-assignments.module';
@@ -41,7 +42,8 @@ import { PrismaModule } from './prisma/prisma.module';
     UsersModule,
     RolesModule,
     ProjectPeriodsModule,
-    StudentEligibilitiesModule,
+    StudentsModule,
+    ProjectPeriodRegistrationsModule,
     TopicsModule,
     TopicRegistrationsModule,
     SupervisorAssignmentsModule,

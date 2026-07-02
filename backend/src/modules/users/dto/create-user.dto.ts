@@ -19,20 +19,19 @@ import {
 } from 'class-validator';
 
 export class CreateStudentProfileDto {
-  @ApiProperty({ example: 'SV_ST1' })
+  @ApiProperty({ example: 'SV001' })
   @IsNotEmpty({ message: 'Mã sinh viên không được để trống' })
   @IsString()
-  studentCode: string;
+  studentCode!: string;
 
   @ApiProperty({ example: 'KTPM01' })
   @IsNotEmpty({ message: 'Lớp không được để trống' })
   @IsString()
-  className: string;
+  className!: string;
 
-  @ApiProperty({ example: 'Software Engineering' })
-  @IsNotEmpty({ message: 'Ngành không được để trống' })
-  @IsString()
-  major: string;
+  @ApiProperty({ description: 'ID ngành được seed sẵn trong cơ sở dữ liệu' })
+  @IsUUID('4', { message: 'Ngành học không hợp lệ' })
+  majorId!: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -41,31 +40,22 @@ export class CreateStudentProfileDto {
 
   @ApiProperty({ enum: InternshipStatus })
   @IsEnum(InternshipStatus)
-  internshipStatus: InternshipStatus;
+  internshipStatus!: InternshipStatus;
 
   @ApiProperty({ enum: AcademicStatus })
   @IsEnum(AcademicStatus)
-  academicStatus: AcademicStatus;
+  academicStatus!: AcademicStatus;
 
-  @ApiProperty({ example: '11111111-1111-4111-8111-111111111111' })
-  @IsUUID('4')
-  projectPeriodId: string;
-
-  @ApiProperty({ example: 118 })
+  @ApiProperty({ example: 110, description: 'Tổng tín chỉ sinh viên đã tích lũy' })
   @IsInt()
   @Min(0)
-  completedCredits: number;
-
-  @ApiProperty({ example: 110 })
-  @IsInt()
-  @Min(0)
-  requiredCredits: number;
+  accumulatedCredits!: number;
 
   @ApiProperty({ example: 2.8 })
   @IsNumber()
   @Min(0)
   @Max(4)
-  gpa: number;
+  gpa!: number;
 
   @ApiPropertyOptional({ example: false })
   @IsOptional()
@@ -81,27 +71,22 @@ export class CreateStudentProfileDto {
   @IsOptional()
   @IsBoolean()
   hasDisciplinaryAction?: boolean;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  reason?: string;
 }
 
 export class CreateUserDto {
   @ApiProperty({ example: 'new.user@example.com' })
   @IsEmail({}, { message: 'Email không hợp lệ' })
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'New User' })
   @IsNotEmpty({ message: 'Họ tên không được để trống' })
   @IsString()
-  fullName: string;
+  fullName!: string;
 
   @ApiProperty({ example: 'Password@123' })
   @IsNotEmpty({ message: 'Mật khẩu không được để trống' })
   @MinLength(8, { message: 'Mật khẩu phải có tối thiểu 8 ký tự' })
-  password: string;
+  password!: string;
 
   @ApiPropertyOptional({ example: '0912345678' })
   @IsOptional()
@@ -114,7 +99,7 @@ export class CreateUserDto {
   @IsUUID('4', { each: true, message: 'Role ID không hợp lệ' })
   roleIds?: string[];
 
-  @ApiPropertyOptional({ type: CreateStudentProfileDto, description: 'Nhập thủ công hồ sơ học vụ khi tạo tài khoản sinh viên' })
+  @ApiPropertyOptional({ type: CreateStudentProfileDto, description: 'Hồ sơ sinh viên và dữ liệu học vụ hiện tại; không gắn với đợt đồ án' })
   @IsOptional()
   @ValidateNested()
   @Type(() => CreateStudentProfileDto)

@@ -33,7 +33,7 @@ export class ProjectPeriodsService {
       where,
       include: {
         createdBy: { select: { id: true, email: true, fullName: true } },
-        _count: { select: { eligibilities: true, topics: true } },
+        _count: { select: { projectPeriodRegistrations: true, topics: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -44,7 +44,7 @@ export class ProjectPeriodsService {
       where: { id },
       include: {
         createdBy: { select: { id: true, email: true, fullName: true } },
-        _count: { select: { eligibilities: true, topics: true } },
+        _count: { select: { projectPeriodRegistrations: true, topics: true } },
       },
     });
 

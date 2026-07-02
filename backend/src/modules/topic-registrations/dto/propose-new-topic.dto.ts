@@ -2,10 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class ProposeNewTopicDto {
-  @ApiProperty()
-  @IsUUID('4')
-  projectPeriodId!: string;
-
   @ApiProperty({ minLength: 5 })
   @IsString()
   @MinLength(5)

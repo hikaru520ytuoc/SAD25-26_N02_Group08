@@ -58,13 +58,13 @@ export default function ProfilePage() {
           {user.student && (
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
               <h2 className="text-lg font-bold text-slate-950">Hồ sơ sinh viên</h2>
-              <p className="mt-1 text-sm text-slate-500">Các trường học vụ là dữ liệu nhập thủ công/phụ trợ để xét điều kiện làm đồ án.</p>
+              <p className="mt-1 text-sm text-slate-500">Điều kiện đăng ký được tính tự động từ ngành, tín chỉ tích lũy, GPA và các trạng thái học vụ hiện tại.</p>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Mã sinh viên</p><p className="font-semibold text-slate-900">{user.student.studentCode}</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Lớp</p><p className="font-semibold text-slate-900">{user.student.className}</p></div>
-                <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Ngành</p><p className="font-semibold text-slate-900">{user.student.major}</p></div>
+                <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Ngành</p><p className="font-semibold text-slate-900">{user.student.major.code} - {user.student.major.name}</p><p className="mt-1 text-xs text-slate-500">Tổng chương trình: {user.student.major.totalCredits} tín chỉ</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Thực tập</p><div className="mt-1"><StatusBadge value={user.student.internshipStatus} /></div></div>
-                <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Tín chỉ</p><p className="font-semibold text-slate-900">{user.student.completedCredits ?? '-'} / {user.student.requiredCredits ?? '-'}</p></div>
+                <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Tín chỉ tích lũy</p><p className="font-semibold text-slate-900">{user.student.accumulatedCredits} / {Math.ceil(user.student.major.totalCredits * 0.8)}</p><p className="mt-1 text-xs text-slate-500">Ngưỡng 80% tổng tín chỉ ngành</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">GPA/CPA</p><p className="font-semibold text-slate-900">{user.student.gpa ?? '-'}</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Nợ môn tiên quyết</p><p className="font-semibold text-slate-900">{yesNo(user.student.hasPrerequisiteDebt)}</p></div>
                 <div className="rounded-2xl bg-slate-50 p-4"><p className="text-xs text-slate-500">Nợ học phí</p><p className="font-semibold text-slate-900">{yesNo(user.student.hasTuitionDebt)}</p></div>

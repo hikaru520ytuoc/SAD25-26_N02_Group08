@@ -12,14 +12,20 @@ export type AuthUser = {
     id: string;
     studentCode: string;
     className: string;
-    major: string;
-    internshipStatus?: string | null;
-    completedCredits?: number | null;
-    requiredCredits?: number | null;
-    gpa?: number | null;
-    hasPrerequisiteDebt?: boolean | null;
-    hasTuitionDebt?: boolean | null;
-    hasDisciplinaryAction?: boolean | null;
+    majorId: string;
+    major: {
+      id: string;
+      code: string;
+      name: string;
+      totalCredits: number;
+    };
+    internshipStatus: string;
+    academicStatus: string;
+    accumulatedCredits: number;
+    gpa: number;
+    hasPrerequisiteDebt: boolean;
+    hasTuitionDebt: boolean;
+    hasDisciplinaryAction: boolean;
   } | null;
   lecturer?: {
     id: string;

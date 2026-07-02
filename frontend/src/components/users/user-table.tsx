@@ -31,7 +31,8 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
         user.phone,
         user.student?.studentCode,
         user.student?.className,
-        user.student?.major,
+        user.student?.major.code,
+        user.student?.major.name,
         user.lecturer?.lecturerCode,
         user.lecturer?.department,
         ...user.roles.map((role) => role.code),
@@ -94,7 +95,7 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
                 const profile = user.student
                   ? {
                       primary: user.student.studentCode,
-                      secondary: `${user.student.className} · ${user.student.major}`,
+                      secondary: `${user.student.className} · ${user.student.major.code} - ${user.student.major.name}`,
                     }
                   : user.lecturer
                     ? {

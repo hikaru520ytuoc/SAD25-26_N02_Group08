@@ -1,8 +1,8 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   AuditResult,
-  EligibilityStatus,
   Prisma,
+  ProjectPeriodRegistrationStatus,
   ProjectPeriodStatus,
   SupervisorAssignmentStatus,
   SupervisorAssignmentType,
@@ -13,7 +13,7 @@ import {
   TopicStatus,
 } from '@prisma/client';
 import { AppException } from '../../common/exceptions/app.exception';
-import { evaluateStudentEligibility } from '../../common/utils/student-eligibility.util';
+import { evaluateStudentAcademicEligibility } from '../../common/utils/student-academic-eligibility.util';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -91,29 +91,30 @@ export class TopicRegistrationsService {
 
   async registerExisting(dto: RegisterExistingTopicDto, actor: AuthUser) {
     const student = await this.getStudentByUserId(actor.id);
-    await this.ensureStudentEligible(student.id, dto.projectPeriodId);
-    await this.ensureNoActiveRegistration(student.id, dto.projectPeriodId);
+    await this.ensureStudentEligible(student.id);
+    const periodRegistration = await this.getActiveProjectPeriodRegistration(student.id);
+    await this.ensureNoActiveRegistration(student.id, periodRegistration.projectPeriodId);
 
     const topic = await this.prisma.topic.findUnique({
       where: { id: dto.topicId },
       include: { supervisor: { include: { user: true } }, projectPeriod: true },
     });
 
-    if (!topic || topic.projectPeriodId !== dto.projectPeriodId) {
-      throw new AppException('TOPIC_NOT_FOUND', 'Không tìm thấy đề tài trong đợt đã chọn', HttpStatus.NOT_FOUND);
+    if (!topic || topic.projectPeriodId !== periodRegistration.projectPeriodId) {
+      throw new AppException('TOPIC_NOT_FOUND', 'Đề tài không thuộc đợt đồ án bạn đã đăng ký', HttpStatus.NOT_FOUND);
     }
 
     if (topic.status !== TopicStatus.PUBLISHED) {
       throw new AppException('TOPIC_NOT_PUBLISHED', 'Chỉ được đăng ký đề tài đã công bố', HttpStatus.CONFLICT);
     }
 
-    this.ensurePeriodAllowsRegistration(topic.projectPeriod.status);
+    this.ensurePeriodAllowsRegistration(topic.projectPeriod);
     await this.ensureTopicHasSlot(topic.id, topic.maxStudents);
 
     const registration = await this.prisma.topicRegistration.create({
       data: {
         studentId: student.id,
-        projectPeriodId: dto.projectPeriodId,
+        projectPeriodId: periodRegistration.projectPeriodId,
         registrationType: TopicRegistrationType.EXISTING_TOPIC,
         topicId: topic.id,
         requestedSupervisorId: topic.supervisorId,
@@ -131,10 +132,10 @@ export class TopicRegistrationsService {
 
   async proposeNew(dto: ProposeNewTopicDto, actor: AuthUser) {
     const student = await this.getStudentByUserId(actor.id);
-    await this.ensureStudentEligible(student.id, dto.projectPeriodId);
-    await this.ensureNoActiveRegistration(student.id, dto.projectPeriodId);
-    const period = await this.ensureProjectPeriod(dto.projectPeriodId);
-    this.ensurePeriodAllowsRegistration(period.status);
+    await this.ensureStudentEligible(student.id);
+    const periodRegistration = await this.getActiveProjectPeriodRegistration(student.id);
+    await this.ensureNoActiveRegistration(student.id, periodRegistration.projectPeriodId);
+    this.ensurePeriodAllowsRegistration(periodRegistration.projectPeriod);
 
     let supervisorResponseStatus: SupervisorResponseStatus = SupervisorResponseStatus.NOT_REQUIRED;
     let status: TopicRegistrationStatus = TopicRegistrationStatus.PENDING_FACULTY;
@@ -148,7 +149,7 @@ export class TopicRegistrationsService {
     const registration = await this.prisma.topicRegistration.create({
       data: {
         studentId: student.id,
-        projectPeriodId: dto.projectPeriodId,
+        projectPeriodId: periodRegistration.projectPeriodId,
         registrationType: TopicRegistrationType.STUDENT_PROPOSED,
         proposedTitle: dto.proposedTitle.trim(),
         proposedDescription: dto.proposedDescription.trim(),
@@ -424,7 +425,7 @@ export class TopicRegistrationsService {
 
   private registrationInclude(): Prisma.TopicRegistrationInclude {
     return {
-      student: { include: { user: { select: { id: true, email: true, fullName: true } } } },
+      student: { include: { major: true, user: { select: { id: true, email: true, fullName: true } } } },
       projectPeriod: true,
       topic: { include: { supervisor: { include: { user: { select: { id: true, email: true, fullName: true } } } } } },
       requestedSupervisor: { include: { user: { select: { id: true, email: true, fullName: true } } } },
@@ -469,30 +470,40 @@ export class TopicRegistrationsService {
     return period;
   }
 
-  private ensurePeriodAllowsRegistration(status: ProjectPeriodStatus) {
-    if (status === ProjectPeriodStatus.CLOSED || status === ProjectPeriodStatus.ARCHIVED) {
-      throw new AppException('TOPIC_REGISTRATION_INVALID_STATUS', 'Đợt đồ án đã đóng hoặc lưu trữ', HttpStatus.CONFLICT);
+  private ensurePeriodAllowsRegistration(period: {
+    status: ProjectPeriodStatus;
+    registrationStartDate: Date | null;
+    registrationEndDate: Date | null;
+  }) {
+    if (period.status !== ProjectPeriodStatus.OPEN) {
+      throw new AppException('TOPIC_REGISTRATION_INVALID_STATUS', 'Đợt đồ án chưa mở đăng ký', HttpStatus.CONFLICT);
+    }
+    const now = new Date();
+    if (period.registrationStartDate && period.registrationStartDate > now) {
+      throw new AppException('TOPIC_REGISTRATION_NOT_STARTED', 'Chưa đến thời gian đăng ký', HttpStatus.CONFLICT);
+    }
+    if (period.registrationEndDate && period.registrationEndDate < now) {
+      throw new AppException('TOPIC_REGISTRATION_ENDED', 'Đã hết thời gian đăng ký', HttpStatus.CONFLICT);
     }
   }
 
-  private async ensureStudentEligible(studentId: string, projectPeriodId: string) {
-    const eligibility = await this.prisma.studentEligibility.findUnique({
-      where: { studentId_projectPeriodId: { studentId, projectPeriodId } },
+  private async ensureStudentEligible(studentId: string) {
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+      include: { major: true, user: true },
     });
+    if (!student) throw new AppException('STUDENT_NOT_FOUND', 'Không tìm thấy hồ sơ sinh viên', HttpStatus.NOT_FOUND);
 
-    if (!eligibility || eligibility.eligibilityStatus !== EligibilityStatus.ELIGIBLE) {
-      throw new AppException('STUDENT_NOT_ELIGIBLE', 'Sinh viên chưa đủ điều kiện đăng ký đề tài', HttpStatus.FORBIDDEN);
-    }
-
-    const evaluation = evaluateStudentEligibility({
-      internshipStatus: eligibility.internshipStatus,
-      academicStatus: eligibility.academicStatus,
-      completedCredits: eligibility.completedCredits,
-      requiredCredits: eligibility.requiredCredits,
-      gpa: eligibility.gpa,
-      hasPrerequisiteDebt: eligibility.hasPrerequisiteDebt,
-      hasTuitionDebt: eligibility.hasTuitionDebt,
-      hasDisciplinaryAction: eligibility.hasDisciplinaryAction,
+    const evaluation = evaluateStudentAcademicEligibility({
+      major: student.major,
+      accumulatedCredits: student.accumulatedCredits,
+      gpa: student.gpa,
+      internshipStatus: student.internshipStatus,
+      academicStatus: student.academicStatus,
+      hasPrerequisiteDebt: student.hasPrerequisiteDebt,
+      hasTuitionDebt: student.hasTuitionDebt,
+      hasDisciplinaryAction: student.hasDisciplinaryAction,
+      userStatus: student.user.status,
     });
 
     if (!evaluation.eligible) {
@@ -502,6 +513,17 @@ export class TopicRegistrationsService {
         HttpStatus.FORBIDDEN,
       );
     }
+  }
+
+  private async getActiveProjectPeriodRegistration(studentId: string) {
+    const registration = await this.prisma.projectPeriodRegistration.findFirst({
+      where: { studentId, status: ProjectPeriodRegistrationStatus.REGISTERED },
+      include: { projectPeriod: true },
+    });
+    if (!registration) {
+      throw new AppException('PROJECT_PERIOD_REGISTRATION_REQUIRED', 'Bạn cần tự chọn và đăng ký một đợt đồ án trước khi đăng ký đề tài', HttpStatus.FORBIDDEN);
+    }
+    return registration;
   }
 
   private async ensureNoActiveRegistration(studentId: string, projectPeriodId: string) {

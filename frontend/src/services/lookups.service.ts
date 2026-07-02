@@ -71,3 +71,7 @@ export function getLookupRoles() {
 export function getLookupFaculties() {
   return apiFetch<LookupOption[]>('/api/lookups/faculties');
 }
+
+export function getLookupMajors() {
+  return apiFetch<LookupOption[]>('/api/lookups/majors');
+}

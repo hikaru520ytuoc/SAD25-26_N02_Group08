@@ -55,8 +55,8 @@ export class LookupsService {
       where: {
         ...(projectPeriodId
           ? {
-              eligibilities: {
-                none: { projectPeriodId },
+              projectPeriodRegistrations: {
+                none: { projectPeriodId, status: 'REGISTERED' },
               },
             }
           : {}),
@@ -65,14 +65,15 @@ export class LookupsService {
               OR: [
                 { studentCode: searchCondition },
                 { className: searchCondition },
-                { major: searchCondition },
+                { major: { code: searchCondition } },
+                { major: { name: searchCondition } },
                 { user: { fullName: searchCondition } },
                 { user: { email: searchCondition } },
               ],
             }
           : {}),
       },
-      include: { user: true },
+      include: { user: true, major: true },
       orderBy: { studentCode: 'asc' },
       take: 100,
     });
@@ -80,7 +81,7 @@ export class LookupsService {
       id: item.id,
       code: item.studentCode,
       label: `${item.studentCode} - ${item.user.fullName}`,
-      subLabel: `${item.className} - ${item.major}`,
+      subLabel: `${item.className} - ${item.major.code} - ${item.major.name}`,
       status: item.internshipStatus,
     }));
   }
@@ -273,6 +274,17 @@ export class LookupsService {
   async roles(): Promise<LookupOption[]> {
     const items = await this.prisma.role.findMany({ orderBy: { code: 'asc' } });
     return items.map((item) => ({ id: item.id, code: item.code, label: item.code, subLabel: item.name }));
+  }
+
+  async majors(): Promise<LookupOption[]> {
+    const items = await this.prisma.major.findMany({ orderBy: { code: 'asc' } });
+    return items.map((item) => ({
+      id: item.id,
+      code: item.code,
+      label: `${item.code} - ${item.name}`,
+      subLabel: `${item.totalCredits} tín chỉ`,
+      meta: { totalCredits: item.totalCredits },
+    }));
   }
 
   async faculties(): Promise<LookupOption[]> {

@@ -15,6 +15,7 @@ export const STATUS_LABELS: Record<string, StatusMeta> = {
   PUBLISHED: { label: 'Đã công bố', tone: 'emerald' },
   CLOSED: { label: 'Đã đóng', tone: 'slate' },
   CANCELLED: { label: 'Đã hủy', tone: 'rose' },
+  REGISTERED: { label: 'Đã đăng ký', tone: 'blue' },
 
   PENDING_SUPERVISOR: { label: 'Chờ GVHD phản hồi', tone: 'amber' },
   PENDING_FACULTY: { label: 'Chờ Khoa xác nhận', tone: 'amber' },

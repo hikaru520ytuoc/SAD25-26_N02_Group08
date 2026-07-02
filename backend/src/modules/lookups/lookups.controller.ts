@@ -72,6 +72,11 @@ export class LookupsController {
     return successResponse(await this.lookupsService.roles(), 'Lấy danh sách vai trò thành công');
   }
 
+  @Get('majors')
+  async majors() {
+    return successResponse(await this.lookupsService.majors(), 'Lấy danh sách ngành thành công');
+  }
+
   @Get('faculties')
   async faculties() {
     return successResponse(await this.lookupsService.faculties(), 'Lấy danh sách khoa thành công');

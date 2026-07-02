@@ -1,5 +1,5 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { AuditResult, Prisma, TopicStatus } from '@prisma/client';
+import { AuditResult, Prisma, ProjectPeriodRegistrationStatus, TopicStatus } from '@prisma/client';
 import { AppException } from '../../common/exceptions/app.exception';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
@@ -26,9 +26,23 @@ export class TopicsService {
     });
   }
 
-  async findPublished(query: QueryTopicDto = {}) {
+  async findPublished(actor: AuthUser, query: QueryTopicDto = {}) {
+    let studentProjectPeriodId: string | undefined;
+    if (actor.roles.includes('STUDENT')) {
+      const student = await this.prisma.student.findUnique({ where: { userId: actor.id } });
+      if (!student) {
+        throw new AppException('STUDENT_NOT_FOUND', 'Tài khoản hiện tại chưa có hồ sơ sinh viên', HttpStatus.NOT_FOUND);
+      }
+      const registration = await this.prisma.projectPeriodRegistration.findFirst({
+        where: { studentId: student.id, status: ProjectPeriodRegistrationStatus.REGISTERED },
+      });
+      if (!registration) return [];
+      studentProjectPeriodId = registration.projectPeriodId;
+    }
+
     const where: Prisma.TopicWhereInput = {
       ...this.buildWhere(query),
+      ...(studentProjectPeriodId ? { projectPeriodId: studentProjectPeriodId } : {}),
       status: TopicStatus.PUBLISHED,
     };
 

@@ -4,7 +4,7 @@ import { Check, Lock, Circle } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 const steps = [
-  { key: 'eligibility', label: 'Đủ điều kiện', paths: ['/faculty/student-eligibilities'] },
+  { key: 'period', label: 'Chọn đợt đồ án', paths: ['/student/project-period-registration', '/faculty/academic-eligibility'] },
   { key: 'topic', label: 'Đăng ký đề tài', paths: ['/student/topic-registration', '/topics'] },
   { key: 'supervisor', label: 'Chốt GVHD', paths: ['/student/supervisor-assignment'] },
   { key: 'outline', label: 'Nộp đề cương', paths: ['/student/outline'] },

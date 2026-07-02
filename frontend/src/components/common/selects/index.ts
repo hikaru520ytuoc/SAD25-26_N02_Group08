@@ -12,3 +12,5 @@ export * from './final-result-select';
 export * from './archive-record-select';
 export * from './faculty-select';
 export * from './role-multi-select';
+
+export * from './major-select';

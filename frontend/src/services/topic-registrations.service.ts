@@ -3,11 +3,9 @@ import type { LecturerOption, TopicRegistration } from '@/types/sprint3';
 
 export type RegisterExistingTopicInput = {
   topicId: string;
-  projectPeriodId: string;
 };
 
 export type ProposeNewTopicInput = {
-  projectPeriodId: string;
   proposedTitle: string;
   proposedDescription: string;
   proposedObjectives?: string;

@@ -102,7 +102,7 @@ export class AuthService {
     const freshUser = await this.prisma.user.findUnique({
       where: { id: user.id },
       include: {
-        student: true,
+        student: { include: { major: true } },
         lecturer: true,
         userRoles: { include: { role: true } },
       },
@@ -145,10 +145,11 @@ export class AuthService {
             id: user.student.id,
             studentCode: user.student.studentCode,
             className: user.student.className,
+            majorId: user.student.majorId,
             major: user.student.major,
             internshipStatus: user.student.internshipStatus,
-            completedCredits: user.student.completedCredits,
-            requiredCredits: user.student.requiredCredits,
+            academicStatus: user.student.academicStatus,
+            accumulatedCredits: user.student.accumulatedCredits,
             gpa: user.student.gpa,
             hasPrerequisiteDebt: user.student.hasPrerequisiteDebt,
             hasTuitionDebt: user.student.hasTuitionDebt,

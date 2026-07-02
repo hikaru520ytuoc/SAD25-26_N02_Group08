@@ -30,8 +30,8 @@ export class TopicsController {
   @Get('published')
   @Roles('STUDENT', 'FACULTY_MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'List published topics for students' })
-  async findPublished(@Query() query: QueryTopicDto) {
-    const data = await this.topicsService.findPublished(query);
+  async findPublished(@CurrentUser() actor: AuthUser, @Query() query: QueryTopicDto) {
+    const data = await this.topicsService.findPublished(actor, query);
     return successResponse(data, 'Lấy danh sách đề tài đã công bố thành công');
   }
 
