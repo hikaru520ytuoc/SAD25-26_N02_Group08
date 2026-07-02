@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { AcademicStatus, AuditResult, EligibilityStatus, Prisma, UserStatus } from '@prisma/client';
+import { AcademicStatus, AuditResult, EligibilityStatus, Prisma, Role, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { AppException } from '../../common/exceptions/app.exception';
 import {
@@ -40,7 +40,7 @@ export class UsersService {
     const [users, total] = await this.prisma.$transaction([
       this.prisma.user.findMany({
         where,
-        include: { userRoles: { include: { role: true } }, student: true },
+        include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -57,7 +57,7 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { userRoles: { include: { role: true } }, student: true },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
     });
 
     if (!user) {
@@ -113,7 +113,7 @@ export class UsersService {
               }
             : undefined,
         },
-        include: { userRoles: { include: { role: true } }, student: true },
+        include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
       });
 
       if (dto.studentProfile) {
@@ -169,7 +169,7 @@ export class UsersService {
 
         return tx.user.findUniqueOrThrow({
           where: { id: createdUser.id },
-          include: { userRoles: { include: { role: true } }, student: true },
+          include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
         });
       }
 
@@ -189,7 +189,14 @@ export class UsersService {
   }
 
   async update(id: string, dto: UpdateUserDto, actor: AuthUser) {
-    await this.findOne(id);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
+    });
+
+    if (!existingUser) {
+      throw new AppException('USER_NOT_FOUND', 'Không tìm thấy người dùng', HttpStatus.NOT_FOUND);
+    }
 
     if (dto.email) {
       const email = dto.email.toLowerCase();
@@ -199,25 +206,56 @@ export class UsersService {
       }
     }
 
+    let nextRoles: Role[] | undefined;
+    if (dto.roleIds) {
+      nextRoles = await this.ensureRolesExist(dto.roleIds);
+      const keepsAdminRole = nextRoles.some((role) => role.code === 'ADMIN');
+      const currentlyAdmin = existingUser.userRoles.some((userRole) => userRole.role.code === 'ADMIN');
+
+      if (id === actor.id && currentlyAdmin && !keepsAdminRole) {
+        throw new AppException(
+          'CANNOT_REMOVE_OWN_ADMIN_ROLE',
+          'Không thể tự gỡ vai trò quản trị viên của tài khoản đang đăng nhập',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      if (currentlyAdmin && !keepsAdminRole) {
+        await this.ensureAnotherActiveAdminExists(id);
+      }
+    }
+
     const data: Prisma.UserUpdateInput = {};
     if (dto.email) data.email = dto.email.toLowerCase();
-    if (dto.fullName !== undefined) data.fullName = dto.fullName;
-    if (dto.phone !== undefined) data.phone = dto.phone;
+    if (dto.fullName !== undefined) data.fullName = dto.fullName.trim();
+    if (dto.phone !== undefined) data.phone = dto.phone.trim() || null;
     if (dto.password) {
       const saltRounds = Number(this.configService.get<string>('BCRYPT_SALT_ROUNDS', '10'));
       data.passwordHash = await bcrypt.hash(dto.password, saltRounds);
     }
 
-    const user = await this.prisma.user.update({
-      where: { id },
-      data,
-      include: { userRoles: { include: { role: true } }, student: true },
+    const user = await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({ where: { id }, data });
+
+      if (dto.roleIds) {
+        const uniqueRoleIds = [...new Set(dto.roleIds)];
+        await tx.userRole.deleteMany({ where: { userId: id } });
+        await tx.userRole.createMany({
+          data: uniqueRoleIds.map((roleId) => ({ userId: id, roleId })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id },
+        include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
+      });
     });
 
     await this.auditLogsService.create({
       actorId: actor.id,
       actorEmail: actor.email,
-      action: 'USER_UPDATED',
+      action: dto.roleIds ? 'USER_PROFILE_AND_ROLES_UPDATED' : 'USER_UPDATED',
       targetType: 'User',
       targetId: user.id,
       result: AuditResult.SUCCESS,
@@ -227,12 +265,35 @@ export class UsersService {
   }
 
   async lock(id: string, actor: AuthUser) {
-    await this.findOne(id);
+    if (id === actor.id) {
+      throw new AppException(
+        'CANNOT_LOCK_CURRENT_ACCOUNT',
+        'Bạn không thể khóa tài khoản đang đăng nhập',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
+    });
+
+    if (!existingUser) {
+      throw new AppException('USER_NOT_FOUND', 'Không tìm thấy người dùng', HttpStatus.NOT_FOUND);
+    }
+
+    if (existingUser.status === UserStatus.LOCKED) {
+      return this.sanitizeUser(existingUser);
+    }
+
+    if (existingUser.userRoles.some((userRole) => userRole.role.code === 'ADMIN')) {
+      await this.ensureAnotherActiveAdminExists(id);
+    }
 
     const user = await this.prisma.user.update({
       where: { id },
       data: { status: UserStatus.LOCKED },
-      include: { userRoles: { include: { role: true } }, student: true },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
     });
 
     await this.auditLogsService.create({
@@ -248,12 +309,23 @@ export class UsersService {
   }
 
   async unlock(id: string, actor: AuthUser) {
-    await this.findOne(id);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
+    });
+
+    if (!existingUser) {
+      throw new AppException('USER_NOT_FOUND', 'Không tìm thấy người dùng', HttpStatus.NOT_FOUND);
+    }
+
+    if (existingUser.status === UserStatus.ACTIVE) {
+      return this.sanitizeUser(existingUser);
+    }
 
     const user = await this.prisma.user.update({
       where: { id },
       data: { status: UserStatus.ACTIVE },
-      include: { userRoles: { include: { role: true } }, student: true },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
     });
 
     await this.auditLogsService.create({
@@ -269,8 +341,28 @@ export class UsersService {
   }
 
   async assignRoles(id: string, dto: AssignRolesDto, actor: AuthUser) {
-    await this.findOne(id);
-    await this.ensureRolesExist(dto.roleIds);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!existingUser) {
+      throw new AppException('USER_NOT_FOUND', 'Không tìm thấy người dùng', HttpStatus.NOT_FOUND);
+    }
+
+    const nextRoles = await this.ensureRolesExist(dto.roleIds);
+    const currentlyAdmin = existingUser.userRoles.some((userRole) => userRole.role.code === 'ADMIN');
+    const keepsAdminRole = nextRoles.some((role) => role.code === 'ADMIN');
+
+    if (id === actor.id && currentlyAdmin && !keepsAdminRole) {
+      throw new AppException(
+        'CANNOT_REMOVE_OWN_ADMIN_ROLE',
+        'Không thể tự gỡ vai trò quản trị viên của tài khoản đang đăng nhập',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    if (currentlyAdmin && !keepsAdminRole) {
+      await this.ensureAnotherActiveAdminExists(id);
+    }
 
     await this.prisma.$transaction([
       this.prisma.userRole.deleteMany({ where: { userId: id } }),
@@ -282,7 +374,7 @@ export class UsersService {
 
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id },
-      include: { userRoles: { include: { role: true } }, student: true },
+      include: { userRoles: { include: { role: true } }, student: true, lecturer: true },
     });
 
     await this.auditLogsService.create({
@@ -304,6 +396,24 @@ export class UsersService {
       throw new AppException('ROLE_NOT_FOUND', 'Một hoặc nhiều role không tồn tại', HttpStatus.NOT_FOUND);
     }
     return roles;
+  }
+
+  private async ensureAnotherActiveAdminExists(excludedUserId: string) {
+    const remainingActiveAdmins = await this.prisma.user.count({
+      where: {
+        id: { not: excludedUserId },
+        status: UserStatus.ACTIVE,
+        userRoles: { some: { role: { code: 'ADMIN' } } },
+      },
+    });
+
+    if (remainingActiveAdmins === 0) {
+      throw new AppException(
+        'LAST_ACTIVE_ADMIN_REQUIRED',
+        'Không thể khóa hoặc gỡ quyền của quản trị viên hoạt động cuối cùng',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 
   private async ensureStudentProfileReferences(facultyId: string | undefined, projectPeriodId: string) {
@@ -339,6 +449,13 @@ export class UsersService {
       hasTuitionDebt: boolean;
       hasDisciplinaryAction: boolean;
     } | null;
+    lecturer?: {
+      id: string;
+      lecturerCode: string;
+      academicRank: string | null;
+      department: string | null;
+      maxSupervisedStudents: number | null;
+    } | null;
     userRoles?: { role: { id: string; code: string; name: string; description: string | null } }[];
   }) {
     return {
@@ -350,6 +467,7 @@ export class UsersService {
       status: user.status,
       roles: user.userRoles?.map((userRole) => userRole.role) ?? [],
       student: user.student,
+      lecturer: user.lecturer,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };

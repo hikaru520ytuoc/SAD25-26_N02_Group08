@@ -144,7 +144,7 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
         <div className="mt-6 rounded-3xl border border-blue-100 bg-blue-50/60 p-5">
           <h3 className="text-lg font-bold text-slate-950">Hồ sơ sinh viên và dữ liệu xét điều kiện</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Các thông tin học vụ là dữ liệu nhập thủ công/phụ trợ. Điều kiện chính của hệ thống vẫn là trạng thái thực tập và xác nhận của Khoa.
+            Các dữ liệu học vụ và thực tập được nhập/quản lý trong hệ thống để phục vụ xét điều kiện. Khoa là đơn vị xác nhận kết quả cuối cùng.
           </p>
 
           <div className="mt-4 grid gap-4 md:grid-cols-3">

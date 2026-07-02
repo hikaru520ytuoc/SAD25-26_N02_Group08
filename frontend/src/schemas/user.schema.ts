@@ -27,3 +27,14 @@ export const createUserSchema = z.object({
 });
 
 export type CreateUserFormValues = z.infer<typeof createUserSchema>;
+
+
+export const updateUserSchema = z.object({
+  email: z.string().min(1, 'Vui lòng nhập email').email('Email không hợp lệ'),
+  fullName: z.string().min(1, 'Vui lòng nhập họ tên'),
+  phone: z.string().optional(),
+  password: z.string().optional().refine((value) => !value || value.length >= 8, 'Mật khẩu phải có tối thiểu 8 ký tự'),
+  roleIds: z.array(z.string()).min(1, 'Vui lòng chọn ít nhất một vai trò'),
+});
+
+export type UpdateUserFormValues = z.infer<typeof updateUserSchema>;

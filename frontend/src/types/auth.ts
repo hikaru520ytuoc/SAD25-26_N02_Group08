@@ -57,6 +57,13 @@ export type UserListItem = {
     hasTuitionDebt: boolean;
     hasDisciplinaryAction: boolean;
   } | null;
+  lecturer?: {
+    id: string;
+    lecturerCode: string;
+    academicRank?: string | null;
+    department?: string | null;
+    maxSupervisedStudents?: number | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 };

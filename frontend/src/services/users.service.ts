@@ -34,6 +34,14 @@ export type CreateUserInput = {
   };
 };
 
+export type UpdateUserInput = {
+  email: string;
+  fullName: string;
+  phone?: string;
+  password?: string;
+  roleIds: string[];
+};
+
 export function getUsers() {
   return apiFetch<PaginatedUsers>('/api/users');
 }
@@ -41,6 +49,17 @@ export function getUsers() {
 export function createUser(input: CreateUserInput) {
   return apiFetch<UserListItem>('/api/users', {
     method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function getUser(id: string) {
+  return apiFetch<UserListItem>(`/api/users/${id}`);
+}
+
+export function updateUser(id: string, input: UpdateUserInput) {
+  return apiFetch<UserListItem>(`/api/users/${id}`, {
+    method: 'PATCH',
     body: JSON.stringify(input),
   });
 }
