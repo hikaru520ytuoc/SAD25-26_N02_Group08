@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { CalendarDays, CheckCircle2, XCircle } from 'lucide-react';
-import { confirmImportantAction } from '@/components/common/confirm-dialog';
+import { ConfirmActionModal } from '@/components/common/confirm-action-modal';
+import { PageHeader } from '@/components/common/page-header';
+import { useToast } from '@/components/providers/toast-provider';
 import { StatusBadge } from '@/components/common/status-badge';
 import {
   cancelProjectPeriodRegistration,
@@ -18,11 +20,13 @@ function formatDate(value?: string | null) {
 }
 
 export default function StudentProjectPeriodRegistrationPage() {
+  const toast = useToast();
   const [data, setData] = useState<AvailableProjectPeriodsResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<{ type: 'register'; projectPeriodId: string; periodName: string } | { type: 'cancel' } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -38,34 +42,41 @@ export default function StudentProjectPeriodRegistrationPage() {
 
   useEffect(() => { void load(); }, []);
 
-  async function handleRegister(projectPeriodId: string, periodName: string) {
-    if (!confirmImportantAction(`Xác nhận đăng ký tham gia “${periodName}”? Sau khi đăng ký đề tài, bạn sẽ không thể tự hủy đợt.`)) return;
-    setActionId(projectPeriodId);
+  async function executeConfirmedAction() {
+    if (!confirmState || actionId) return;
     setError(null);
     setSuccess(null);
-    try {
-      await registerProjectPeriod(projectPeriodId);
-      setSuccess('Đăng ký đợt đồ án thành công. Bạn có thể chuyển sang đăng ký đề tài.');
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể đăng ký đợt đồ án.');
-    } finally {
-      setActionId(null);
+    if (confirmState.type === 'register') {
+      setActionId(confirmState.projectPeriodId);
+      try {
+        await registerProjectPeriod(confirmState.projectPeriodId);
+        setSuccess('Đăng ký đợt đồ án thành công. Bạn có thể chuyển sang đăng ký đề tài.');
+        toast.success('Đăng ký đợt đồ án thành công');
+        setConfirmState(null);
+        await load();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Không thể đăng ký đợt đồ án.';
+        setError(message);
+        toast.error('Không thể đăng ký đợt đồ án', message);
+      } finally {
+        setActionId(null);
+      }
+      return;
     }
-  }
 
-  async function handleCancel() {
     const active = data?.activeRegistration;
-    if (!active || !confirmImportantAction(`Hủy đăng ký “${active.projectPeriod.name}”?`)) return;
+    if (!active) return;
     setActionId(active.id);
-    setError(null);
-    setSuccess(null);
     try {
       await cancelProjectPeriodRegistration(active.id);
       setSuccess('Đã hủy đăng ký đợt đồ án.');
+      toast.success('Đã hủy đăng ký đợt đồ án');
+      setConfirmState(null);
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể hủy đăng ký đợt đồ án.');
+      const message = err instanceof Error ? err.message : 'Không thể hủy đăng ký đợt đồ án.';
+      setError(message);
+      toast.error('Không thể hủy đăng ký đợt', message);
     } finally {
       setActionId(null);
     }
@@ -73,12 +84,7 @@ export default function StudentProjectPeriodRegistrationPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl bg-white p-8 shadow-sm">
-        <h1 className="text-3xl font-bold text-slate-950">Đăng ký đợt đồ án</h1>
-        <p className="mt-2 max-w-3xl text-slate-600">
-          Hệ thống tự đánh giá hồ sơ học vụ. Khi đủ điều kiện, bạn được tự chọn một đợt đang mở; hệ thống không tự gán bạn vào bất kỳ đợt nào.
-        </p>
-      </section>
+      <PageHeader title="Đăng ký đợt đồ án" description="Hệ thống tự đánh giá hồ sơ học vụ. Khi đủ điều kiện, bạn được tự chọn một đợt đang mở; hệ thống không tự gán bạn vào bất kỳ đợt nào." />
 
       {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
       {success && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">{success}</div>}
@@ -104,7 +110,7 @@ export default function StudentProjectPeriodRegistrationPage() {
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <Link href="/student/topic-registration" className="rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-semibold text-white">Tiếp tục đăng ký đề tài</Link>
-                  <button onClick={handleCancel} disabled={actionId === data.activeRegistration.id} className="rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-50">
+                  <button onClick={() => setConfirmState({ type: 'cancel' })} disabled={actionId === data.activeRegistration.id} className="rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-sm font-semibold text-rose-700 disabled:opacity-50">
                     {actionId === data.activeRegistration.id ? 'Đang hủy...' : 'Hủy đăng ký đợt'}
                   </button>
                 </div>
@@ -132,7 +138,7 @@ export default function StudentProjectPeriodRegistrationPage() {
                             <div className="flex justify-between gap-4"><dt>Kết thúc đợt</dt><dd className="font-medium text-slate-900">{formatDate(period.endDate)}</dd></div>
                             <div className="flex justify-between gap-4"><dt>Hạn đăng ký</dt><dd className="font-medium text-slate-900">{formatDate(period.registrationEndDate)}</dd></div>
                           </dl>
-                          <button onClick={() => handleRegister(period.id, period.name)} disabled={actionId === period.id} className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
+                          <button onClick={() => setConfirmState({ type: 'register', projectPeriodId: period.id, periodName: period.name })} disabled={actionId === period.id} className="mt-5 w-full rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-50">
                             {actionId === period.id ? 'Đang đăng ký...' : 'Đăng ký tham gia đợt'}
                           </button>
                         </div>
@@ -153,6 +159,20 @@ export default function StudentProjectPeriodRegistrationPage() {
           )}
         </>
       )}
+      <ConfirmActionModal
+        open={Boolean(confirmState)}
+        onClose={() => !actionId && setConfirmState(null)}
+        onConfirm={executeConfirmedAction}
+        loading={Boolean(actionId)}
+        tone={confirmState?.type === 'cancel' ? 'danger' : 'primary'}
+        title={confirmState?.type === 'cancel' ? 'Hủy đăng ký đợt đồ án' : 'Xác nhận đăng ký đợt đồ án'}
+        confirmLabel={confirmState?.type === 'cancel' ? 'Hủy đăng ký' : 'Đăng ký tham gia'}
+        description={confirmState?.type === 'cancel'
+          ? <>Bạn sắp hủy đăng ký <strong>{data?.activeRegistration?.projectPeriod.name}</strong>. Thao tác chỉ được phép khi chưa phát sinh đăng ký đề tài.</>
+          : confirmState?.type === 'register'
+            ? <>Bạn xác nhận tham gia <strong>{confirmState.periodName}</strong>. Sau khi đăng ký đề tài, bạn sẽ không thể tự hủy đợt.</>
+            : null}
+      />
     </div>
   );
 }

@@ -1,73 +1,44 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { Loader2 } from 'lucide-react';
+import { useEffect } from 'react';
+import { useForm, type DefaultValues } from 'react-hook-form';
 import { z } from 'zod';
 import { ProjectPeriodSelect } from '@/components/common/selects';
 import { topicSchema } from '@/schemas/sprint2.schema';
 import type { TopicInput } from '@/services/topics.service';
 
 type FormValues = z.infer<typeof topicSchema>;
+const emptyValues: DefaultValues<FormValues> = { title: '', description: '', objectives: '', expectedOutput: '', major: '', maxStudents: undefined, projectPeriodId: '' };
 
-type Props = {
-  onSubmit: (input: TopicInput) => Promise<void>;
-  loading?: boolean;
-};
+export function TopicForm({ onSubmit, loading, initialValues, submitLabel = 'Lưu bản nháp', onCancel }: { onSubmit: (input: TopicInput) => Promise<void>; loading?: boolean; initialValues?: Partial<TopicInput> | null; submitLabel?: string; onCancel?: () => void }) {
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({ resolver: zodResolver(topicSchema), defaultValues: emptyValues });
 
-export function TopicForm({ onSubmit, loading }: Props) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(topicSchema),
-    defaultValues: {
-      title: 'Xây dựng hệ thống quản lý đồ án tốt nghiệp',
-      description: 'Đề tài xây dựng web app quản lý quy trình đồ án tốt nghiệp.',
-      projectPeriodId: '',
-      maxStudents: 1,
-      major: 'Software Engineering',
-    },
-  });
+  useEffect(() => {
+    reset({ ...emptyValues, ...initialValues });
+  }, [initialValues, reset]);
+
+  async function submit(values: FormValues) {
+    await onSubmit(values);
+    if (!initialValues) reset(emptyValues);
+  }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:grid-cols-2">
-      <div className="md:col-span-2">
-        <h2 className="text-xl font-bold text-slate-950">Tạo đề tài</h2>
-        <p className="text-sm text-slate-500">GVHD tạo đề tài ở trạng thái nháp. Đợt đồ án được chọn bằng tên, không nhập mã nội bộ.</p>
+    <form onSubmit={handleSubmit(submit)} className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="field-label md:col-span-2">Tên đề tài <span className="text-rose-600">*</span><input {...register('title')} placeholder="Nhập tên đề tài" className="field-input" />{errors.title && <span className="text-xs text-rose-600">{errors.title.message}</span>}</label>
+        <label className="field-label md:col-span-2">Mô tả <span className="text-rose-600">*</span><textarea {...register('description')} placeholder="Mô tả ngắn gọn phạm vi và vấn đề cần giải quyết" className="field-input resize-y" rows={4} />{errors.description && <span className="text-xs text-rose-600">{errors.description.message}</span>}</label>
+        <ProjectPeriodSelect status="OPEN" value={watch('projectPeriodId')} onChange={(value) => setValue('projectPeriodId', value, { shouldValidate: true })} error={errors.projectPeriodId?.message} />
+        <label className="field-label">Số sinh viên tối đa <span className="text-rose-600">*</span><input type="number" min={1} {...register('maxStudents')} className="field-input" />{errors.maxStudents && <span className="text-xs text-rose-600">{errors.maxStudents.message}</span>}</label>
+        <label className="field-label">Chuyên ngành/lĩnh vực<input {...register('major')} placeholder="Nhập chuyên ngành phù hợp" className="field-input" /></label>
+        <label className="field-label">Sản phẩm dự kiến<input {...register('expectedOutput')} placeholder="Mô tả sản phẩm đầu ra" className="field-input" /></label>
+        <label className="field-label md:col-span-2">Mục tiêu<textarea {...register('objectives')} placeholder="Các mục tiêu chính của đề tài" className="field-input resize-y" rows={3} /></label>
       </div>
-      <label className="space-y-1 text-sm font-medium text-slate-700 md:col-span-2">
-        Tên đề tài
-        <input {...register('title')} className="w-full rounded-xl border px-3 py-2" />
-        {errors.title && <p className="text-xs text-red-600">{errors.title.message}</p>}
-      </label>
-      <label className="space-y-1 text-sm font-medium text-slate-700 md:col-span-2">
-        Mô tả
-        <textarea {...register('description')} className="w-full rounded-xl border px-3 py-2" rows={3} />
-        {errors.description && <p className="text-xs text-red-600">{errors.description.message}</p>}
-      </label>
-      <ProjectPeriodSelect
-        status="OPEN"
-        value={watch('projectPeriodId')}
-        onChange={(value) => setValue('projectPeriodId', value, { shouldValidate: true })}
-        error={errors.projectPeriodId?.message}
-      />
-      <label className="space-y-1 text-sm font-medium text-slate-700">
-        Số SV tối đa
-        <input type="number" {...register('maxStudents')} className="w-full rounded-xl border px-3 py-2" />
-        {errors.maxStudents && <p className="text-xs text-red-600">{errors.maxStudents.message}</p>}
-      </label>
-      <label className="space-y-1 text-sm font-medium text-slate-700">
-        Ngành
-        <input {...register('major')} className="w-full rounded-xl border px-3 py-2" />
-      </label>
-      <label className="space-y-1 text-sm font-medium text-slate-700">
-        Sản phẩm dự kiến
-        <input {...register('expectedOutput')} className="w-full rounded-xl border px-3 py-2" />
-      </label>
-      <label className="space-y-1 text-sm font-medium text-slate-700 md:col-span-2">
-        Mục tiêu
-        <textarea {...register('objectives')} className="w-full rounded-xl border px-3 py-2" rows={2} />
-      </label>
-      <button disabled={loading} className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60 md:col-span-2">
-        {loading ? 'Đang tạo...' : 'Tạo đề tài'}
-      </button>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        {onCancel && <button type="button" disabled={loading} onClick={onCancel} className="secondary-button">Hủy</button>}
+        <button type="submit" disabled={loading} className="primary-button">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{loading ? 'Đang lưu...' : submitLabel}</button>
+      </div>
     </form>
   );
 }

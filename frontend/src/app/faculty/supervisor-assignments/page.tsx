@@ -1,6 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { GraduationCap, UserCheck, UsersRound } from 'lucide-react';
+import { ErrorState } from '@/components/common/error-state';
+import { FilterBar } from '@/components/common/filter-bar';
+import { LoadingSkeleton } from '@/components/common/loading-skeleton';
+import { PageHeader } from '@/components/common/page-header';
+import { SummaryStatCard } from '@/components/common/summary-stat-card';
 import { SupervisorAssignmentTable } from '@/components/sprint3/supervisor-assignment-table';
 import { getSupervisorAssignments } from '@/services/supervisor-assignments.service';
 import type { SupervisorAssignment } from '@/types/sprint3';
@@ -9,30 +15,20 @@ export default function FacultySupervisorAssignmentsPage() {
   const [items, setItems] = useState<SupervisorAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [periodId, setPeriodId] = useState('');
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setItems(await getSupervisorAssignments());
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Không tải được phân công GVHD');
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  async function load() { setLoading(true); setError(null); try { setItems(await getSupervisorAssignments()); } catch (err) { setError(err instanceof Error ? err.message : 'Không tải được phân công GVHD'); } finally { setLoading(false); } }
+  useEffect(() => { void load(); }, []);
+  const periods = useMemo(() => Array.from(new Map(items.map((item) => [item.projectPeriod.id, item.projectPeriod])).values()), [items]);
+  const visible = periodId ? items.filter((item) => item.projectPeriod.id === periodId) : items;
+  const supervisors = new Set(visible.map((item) => item.supervisor.id)).size;
 
-  return (
-    <>
-      <div className="space-y-6">
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-950">Danh sách phân công GVHD</h1>
-          <p className="mt-2 text-slate-600">Khoa xem các phân công GVHD đã được xác nhận chính thức.</p>
-        </div>
-        {error && <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-        {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : <SupervisorAssignmentTable items={items} />}
-      </div>
-    </>
-  );
+  return <div className="space-y-6">
+    <PageHeader title="Danh sách phân công GVHD" description="Theo dõi các phân công GVHD đã được Khoa xác nhận chính thức, kèm đề tài, đợt đồ án và thông tin sinh viên." />
+    <div className="grid gap-4 sm:grid-cols-3"><SummaryStatCard label="Tổng phân công" value={visible.length} icon={GraduationCap} /><SummaryStatCard label="Sinh viên đang hướng dẫn" value={new Set(visible.map((item) => item.student.id)).size} icon={UserCheck} tone="blue" /><SummaryStatCard label="GVHD tham gia" value={supervisors} icon={UsersRound} tone="emerald" /></div>
+    <FilterBar><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Tìm sinh viên, GVHD, đề tài..." className="field-input min-w-[260px] flex-1" /><select value={periodId} onChange={(event) => setPeriodId(event.target.value)} className="field-input min-w-56"><option value="">Tất cả đợt đồ án</option>{periods.map((period) => <option key={period.id} value={period.id}>{period.name}</option>)}</select></FilterBar>
+    {error && <ErrorState message={error} onRetry={() => void load()} />}
+    {loading ? <LoadingSkeleton rows={5} /> : <SupervisorAssignmentTable items={visible} search={search} />}
+  </div>;
 }

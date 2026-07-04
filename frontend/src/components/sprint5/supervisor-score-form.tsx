@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { SupervisorApproveDefenseValues } from '@/schemas/sprint5.schema';
 
 export function SupervisorScoreForm({ onSubmit }: { onSubmit: (payload: SupervisorApproveDefenseValues) => Promise<void> }) {
-  const [score, setScore] = useState('8');
+  const [score, setScore] = useState('');
   const [comment, setComment] = useState('');
   return (
     <div className="grid gap-3 md:grid-cols-3">

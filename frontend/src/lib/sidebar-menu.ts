@@ -13,11 +13,9 @@ import {
   LayoutDashboard,
   LockKeyhole,
   Medal,
-  ScrollText,
   Settings,
   Shield,
   Star,
-  UserCheck,
   UserCircle,
   Users,
 } from 'lucide-react';

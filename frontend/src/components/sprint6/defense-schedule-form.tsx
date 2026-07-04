@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CouncilSelect, DefenseRegistrationSelect } from '@/components/common/selects';
+import { VietnameseDateInput, toIsoDate, toVietnameseDate } from '@/components/common/vietnamese-date-input';
 import type { LookupOption } from '@/services/lookups.service';
 import type { DefenseScheduleValues } from '@/schemas/sprint6.schema';
 
@@ -19,7 +20,7 @@ export function DefenseScheduleForm({ onSubmit }: { onSubmit: (values: DefenseSc
     }
     try {
       setError('');
-      await onSubmit(form);
+      await onSubmit({ ...form, defenseDate: toIsoDate(form.defenseDate) });
       setForm({ defenseRegistrationId: '', councilId: '', room: '', defenseDate: '', startTime: '', endTime: '' });
       setSelectedRegistration(undefined);
       setSelectedCouncil(undefined);
@@ -46,7 +47,7 @@ export function DefenseScheduleForm({ onSubmit }: { onSubmit: (values: DefenseSc
       {selectedRegistration ? <div className="rounded-xl bg-blue-50 p-3 text-sm text-blue-800">Hồ sơ: {selectedRegistration.label}<br />{selectedRegistration.subLabel}</div> : null}
       {selectedCouncil ? <div className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">Hội đồng: {selectedCouncil.label}<br />{selectedCouncil.subLabel}</div> : null}
       <input className="rounded-xl border p-3" placeholder="Phòng" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} />
-      <input className="rounded-xl border p-3" type="date" value={form.defenseDate} onChange={(e) => setForm({ ...form, defenseDate: e.target.value })} />
+      <VietnameseDateInput value={toVietnameseDate(form.defenseDate) || form.defenseDate} onChange={(value) => setForm({ ...form, defenseDate: value })} aria-label="Ngày bảo vệ" />
       <input className="rounded-xl border p-3" type="time" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
       <input className="rounded-xl border p-3" type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
       <button className="md:col-span-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white">Tạo lịch</button>

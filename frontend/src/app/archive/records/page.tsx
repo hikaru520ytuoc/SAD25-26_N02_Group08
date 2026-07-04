@@ -1,53 +1,73 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ArchiveRecordTable } from '@/components/sprint8/archive-record-table';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, FileArchive, FileWarning, LockKeyhole, PackageCheck } from 'lucide-react';
+import { ConfirmActionModal } from '@/components/common/confirm-action-modal';
+import { DetailDrawer } from '@/components/common/detail-drawer';
+import { EmptyState } from '@/components/common/empty-state';
+import { ErrorState } from '@/components/common/error-state';
+import { FileCard } from '@/components/common/file-card';
+import { FilterBar } from '@/components/common/filter-bar';
+import { LoadingSkeleton } from '@/components/common/loading-skeleton';
+import { PageHeader } from '@/components/common/page-header';
+import { ReasonModal } from '@/components/common/reason-modal';
+import { StatusBadge } from '@/components/common/status-badge';
+import { SummaryStatCard } from '@/components/common/summary-stat-card';
+import { useToast } from '@/components/providers/toast-provider';
 import { approveArchive, completeArchive, getArchives, lockArchive, requestArchiveSupplement } from '@/services/archives.service';
 import type { ArchiveRecord } from '@/types/sprint8';
 
+type ConfirmAction = { type: 'APPROVE' | 'COMPLETE' | 'LOCK'; record: ArchiveRecord } | null;
+
 export default function ArchiveRecordsPage() {
+  const toast = useToast();
   const [items, setItems] = useState<ArchiveRecord[]>([]);
+  const [tab, setTab] = useState<'PENDING' | 'PROCESSED' | 'LOCKED'>('PENDING');
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [selected, setSelected] = useState<ArchiveRecord | null>(null);
+  const [supplementTarget, setSupplementTarget] = useState<ArchiveRecord | null>(null);
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
 
-  async function load() {
-    try {
-      setError('');
-      setItems(await getArchives());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không tải được hồ sơ');
-    }
-  }
-
+  async function load() { setLoading(true); setError(''); try { setItems(await getArchives()); } catch (err) { setError(err instanceof Error ? err.message : 'Không tải được hồ sơ'); } finally { setLoading(false); } }
   useEffect(() => { void load(); }, []);
+  const stats = useMemo(() => ({ total: items.length, submitted: items.filter((item) => item.status === 'SUBMITTED').length, supplement: items.filter((item) => item.status === 'NEEDS_SUPPLEMENT').length, approved: items.filter((item) => item.status === 'APPROVED').length, completed: items.filter((item) => item.status === 'COMPLETED').length, locked: items.filter((item) => item.status === 'LOCKED').length }), [items]);
+  const visible = items.filter((item) => tab === 'PENDING' ? item.status === 'SUBMITTED' : tab === 'LOCKED' ? item.status === 'LOCKED' : ['NEEDS_SUPPLEMENT', 'APPROVED', 'COMPLETED'].includes(item.status)).filter((item) => !status || item.status === status).filter((item) => { const keyword = search.trim().toLocaleLowerCase('vi'); const name = item.student?.user?.fullName ?? item.finalResult?.student?.user?.fullName ?? ''; const code = item.student?.studentCode ?? item.finalResult?.student?.studentCode ?? ''; return !keyword || [name, code, item.archiveNote, item.supplementReason].some((value) => value?.toLocaleLowerCase('vi').includes(keyword)); });
 
-  async function supplement(record: ArchiveRecord, reason: string) {
-    await requestArchiveSupplement(record.id, { supplementReason: reason });
-    await load();
+  function replace(updated: ArchiveRecord) { setItems((current) => current.map((item) => item.id === updated.id ? updated : item)); setSelected((current) => current?.id === updated.id ? updated : current); }
+  async function supplement(reason: string) { if (!supplementTarget) return; setProcessing(true); try { const updated = await requestArchiveSupplement(supplementTarget.id, { supplementReason: reason }); replace(updated); toast.success('Đã yêu cầu bổ sung hồ sơ'); setSupplementTarget(null); setTab('PROCESSED'); } catch (err) { toast.error('Không thể yêu cầu bổ sung', err instanceof Error ? err.message : undefined); } finally { setProcessing(false); } }
+  async function executeAction() {
+    if (!confirmAction) return;
+    setProcessing(true);
+    try {
+      const updated = confirmAction.type === 'APPROVE' ? await approveArchive(confirmAction.record.id) : confirmAction.type === 'COMPLETE' ? await completeArchive(confirmAction.record.id) : await lockArchive(confirmAction.record.id);
+      replace(updated);
+      const message = confirmAction.type === 'APPROVE' ? 'Đã phê duyệt hồ sơ lưu trữ' : confirmAction.type === 'COMPLETE' ? 'Đã hoàn tất lưu trữ' : 'Đã khóa hồ sơ';
+      toast.success(message);
+      const nextTab = confirmAction.type === 'LOCK' ? 'LOCKED' : 'PROCESSED';
+      setConfirmAction(null); setTab(nextTab);
+    } catch (err) { toast.error('Không thể cập nhật hồ sơ', err instanceof Error ? err.message : undefined); }
+    finally { setProcessing(false); }
   }
 
-  async function approve(record: ArchiveRecord) {
-    await approveArchive(record.id);
-    await load();
-  }
+  return <div className="space-y-6">
+    <PageHeader title="Kiểm tra và lưu trữ hồ sơ" description="Duyệt file cuối cùng, yêu cầu bổ sung, hoàn tất bàn giao và khóa hồ sơ theo đúng trạng thái nghiệp vụ." />
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5"><SummaryStatCard label="Tổng hồ sơ" value={stats.total} icon={FileArchive} /><SummaryStatCard label="Chờ kiểm tra" value={stats.submitted} tone="amber" /><SummaryStatCard label="Cần bổ sung" value={stats.supplement} icon={FileWarning} tone="rose" /><SummaryStatCard label="Đã hoàn tất" value={stats.completed} icon={PackageCheck} tone="blue" /><SummaryStatCard label="Đã khóa" value={stats.locked} icon={LockKeyhole} tone="violet" /></div>
+    <div className="flex gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white p-2"><button type="button" onClick={() => { setTab('PENDING'); setStatus(''); }} className={tab === 'PENDING' ? 'tab-button-active' : 'tab-button'}>Chờ kiểm tra ({stats.submitted})</button><button type="button" onClick={() => { setTab('PROCESSED'); setStatus(''); }} className={tab === 'PROCESSED' ? 'tab-button-active' : 'tab-button'}>Đã xử lý ({stats.supplement + stats.approved + stats.completed})</button><button type="button" onClick={() => { setTab('LOCKED'); setStatus(''); }} className={tab === 'LOCKED' ? 'tab-button-active' : 'tab-button'}>Đã khóa ({stats.locked})</button></div>
+    <FilterBar search={search} onSearchChange={setSearch} placeholder="Tìm mã hoặc tên sinh viên..." resultCount={visible.length}>{tab === 'PROCESSED' && <select value={status} onChange={(event) => setStatus(event.target.value)} className="field-input"><option value="">Tất cả trạng thái</option><option value="NEEDS_SUPPLEMENT">Cần bổ sung</option><option value="APPROVED">Đã duyệt</option><option value="COMPLETED">Đã hoàn tất</option></select>}</FilterBar>
+    {error && <ErrorState message={error} onRetry={() => void load()} />}
+    {loading ? <LoadingSkeleton rows={5} /> : visible.length === 0 ? <EmptyState title="Không có hồ sơ phù hợp" /> : <div className="grid gap-4 xl:grid-cols-2">{visible.map((record) => { const name = record.student?.user?.fullName ?? record.finalResult?.student?.user?.fullName ?? 'Sinh viên'; const code = record.student?.studentCode ?? record.finalResult?.student?.studentCode ?? ''; return <article key={record.id} className="section-card"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-slate-950">{code} – {name}</h2><p className="mt-1 line-clamp-1 text-sm text-slate-500">{record.finalResult?.defenseRegistration?.title ?? record.archiveNote ?? 'Hồ sơ lưu trữ đồ án'}</p></div><StatusBadge value={record.status} /></div><div className="mt-4 grid grid-cols-4 gap-2 text-center text-xs"><FileFlag label="Báo cáo" present={Boolean(record.finalReportFile ?? record.finalReportFileId)} required /><FileFlag label="Slide" present={Boolean(record.finalSlideFile ?? record.finalSlideFileId)} /><FileFlag label="Source" present={Boolean(record.sourceCodeFile ?? record.sourceCodeFileId)} /><FileFlag label="Bổ sung" present={Boolean(record.additionalDocumentFile ?? record.additionalDocumentFileId)} /></div>{record.supplementReason && <p className="mt-4 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800">{record.supplementReason}</p>}<div className="mt-4 flex flex-wrap gap-2 border-t border-slate-100 pt-4"><button type="button" onClick={() => setSelected(record)} className="secondary-button"><Eye className="mr-1.5 h-4 w-4" />Xem chi tiết</button>{record.status === 'SUBMITTED' && <><button type="button" onClick={() => setSupplementTarget(record)} className="secondary-button text-amber-700">Yêu cầu bổ sung</button><button type="button" onClick={() => setConfirmAction({ type: 'APPROVE', record })} className="primary-button">Phê duyệt</button></>}{record.status === 'APPROVED' && <button type="button" onClick={() => setConfirmAction({ type: 'COMPLETE', record })} className="primary-button">Hoàn tất lưu trữ</button>}{record.status === 'COMPLETED' && <button type="button" onClick={() => setConfirmAction({ type: 'LOCK', record })} className="inline-flex items-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white"><LockKeyhole className="mr-1.5 h-4 w-4" />Khóa hồ sơ</button>}</div></article>; })}</div>}
 
-  async function complete(record: ArchiveRecord) {
-    await completeArchive(record.id);
-    await load();
-  }
-
-  async function lock(record: ArchiveRecord) {
-    await lockArchive(record.id);
-    await load();
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-slate-950">Kiểm tra hồ sơ lưu trữ</h1>
-        <p className="mt-2 text-sm text-slate-600">Duyệt, yêu cầu bổ sung, hoàn tất và khóa hồ sơ theo từng dòng riêng biệt.</p>
-      </div>
-      {error ? <div className="rounded-xl bg-red-50 p-4 text-red-700">{error}</div> : null}
-      <ArchiveRecordTable records={items} onApprove={approve} onRequestSupplement={supplement} onComplete={complete} onLock={lock} />
-    </div>
-  );
+    <DetailDrawer open={Boolean(selected)} onClose={() => !processing && setSelected(null)} title={selected ? `${selected.student?.studentCode ?? selected.finalResult?.student?.studentCode ?? ''} – ${selected.student?.user?.fullName ?? selected.finalResult?.student?.user?.fullName ?? 'Chi tiết lưu trữ'}` : 'Chi tiết lưu trữ'} description="Hồ sơ sau khi khóa chỉ còn quyền xem và tải file." footer={selected && selected.status !== 'LOCKED' ? <ActionFooter record={selected} onSupplement={() => setSupplementTarget(selected)} onConfirm={(type) => setConfirmAction({ type, record: selected })} /> : undefined}>{selected && <div className="space-y-5"><section className="section-card"><div className="flex items-center justify-between"><h3 className="font-bold">Trạng thái hồ sơ</h3><StatusBadge value={selected.status} /></div><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><Info label="Kết quả" value={selected.finalResult?.resultStatus} status /><Info label="Ngày nộp" value={selected.submittedAt ? new Date(selected.submittedAt).toLocaleString('vi-VN') : '-'} /><Info label="Ngày khóa" value={selected.lockedAt ? new Date(selected.lockedAt).toLocaleString('vi-VN') : '-'} /><Info label="Ghi chú" value={selected.archiveNote || '-'} /></dl>{selected.supplementReason && <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-800"><strong>Yêu cầu bổ sung:</strong> {selected.supplementReason}</div>}{selected.status === 'LOCKED' && <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm font-semibold text-violet-800">Hồ sơ đã khóa. Mọi thao tác chỉnh sửa/nộp lại phải bị backend từ chối.</div>}</section><section className="section-card"><h3 className="font-bold">Tài liệu lưu trữ</h3><div className="mt-4 space-y-3">{selected.finalReportFile ? <FileCard file={selected.finalReportFile} /> : <Missing label="Báo cáo cuối" />}{selected.finalSlideFile ? <FileCard file={selected.finalSlideFile} /> : <Missing label="Slide cuối" optional />}{selected.sourceCodeFile ? <FileCard file={selected.sourceCodeFile} /> : <Missing label="Source code" optional />}{selected.additionalDocumentFile ? <FileCard file={selected.additionalDocumentFile} /> : <Missing label="File bổ sung/hướng dẫn" optional />}</div></section><section className="section-card"><h3 className="font-bold">Tiến trình lưu trữ</h3><ol className="mt-4 space-y-3 text-sm"><Step done={['SUBMITTED', 'NEEDS_SUPPLEMENT', 'APPROVED', 'COMPLETED', 'LOCKED'].includes(selected.status)} label="Nộp hồ sơ" /><Step done={['APPROVED', 'COMPLETED', 'LOCKED'].includes(selected.status)} label="Phê duyệt hồ sơ" /><Step done={['COMPLETED', 'LOCKED'].includes(selected.status)} label="Hoàn tất lưu trữ" /><Step done={selected.status === 'LOCKED'} label="Khóa hồ sơ" /></ol></section></div>}</DetailDrawer>
+    <ReasonModal open={Boolean(supplementTarget)} onClose={() => !processing && setSupplementTarget(null)} onSubmit={supplement} loading={processing} title="Yêu cầu bổ sung hồ sơ lưu trữ" label="Tài liệu/nội dung cần bổ sung" submitLabel="Gửi yêu cầu" />
+    <ConfirmActionModal open={Boolean(confirmAction)} onClose={() => !processing && setConfirmAction(null)} onConfirm={executeAction} loading={processing} tone={confirmAction?.type === 'LOCK' ? 'danger' : 'primary'} title={confirmAction?.type === 'APPROVE' ? 'Phê duyệt hồ sơ lưu trữ' : confirmAction?.type === 'COMPLETE' ? 'Hoàn tất lưu trữ' : 'Khóa hồ sơ vĩnh viễn'} confirmLabel={confirmAction?.type === 'APPROVE' ? 'Phê duyệt' : confirmAction?.type === 'COMPLETE' ? 'Hoàn tất' : 'Khóa hồ sơ'} description={confirmAction ? confirmAction.type === 'LOCK' ? <><strong>Cảnh báo:</strong> Sau khi khóa, hồ sơ không thể chỉnh sửa hoặc nộp lại. Backend sẽ chặn toàn bộ mutation liên quan.</> : <>Xác nhận thao tác với hồ sơ của <strong>{confirmAction.record.student?.studentCode ?? confirmAction.record.finalResult?.student?.studentCode} – {confirmAction.record.student?.user?.fullName ?? confirmAction.record.finalResult?.student?.user?.fullName}</strong>. Trạng thái và các hành động hợp lệ sẽ được cập nhật ngay.</> : null} />
+  </div>;
 }
+function FileFlag({ label, present, required = false }: { label: string; present: boolean; required?: boolean }) { return <div className={`rounded-xl p-2 font-semibold ${present ? 'bg-emerald-50 text-emerald-700' : required ? 'bg-rose-50 text-rose-700' : 'bg-slate-100 text-slate-500'}`}>{present ? '✓' : required ? '✕' : '○'} {label}</div>; }
+function Info({ label, value, status = false }: { label: string; value?: string | null; status?: boolean }) { return <div><dt className="text-slate-500">{label}</dt><dd className="mt-1 font-semibold">{status ? <StatusBadge value={value} /> : value || '-'}</dd></div>; }
+function Missing({ label, optional = false }: { label: string; optional?: boolean }) { return <div className={`rounded-2xl border border-dashed p-4 text-sm ${optional ? 'border-slate-300 text-slate-500' : 'border-rose-200 bg-rose-50 text-rose-700'}`}>{optional ? 'Chưa có' : 'Thiếu'}: {label}</div>; }
+function Step({ done, label }: { done: boolean; label: string }) { return <li className={`flex items-center gap-3 ${done ? 'text-emerald-700' : 'text-slate-400'}`}><span className={`h-3 w-3 rounded-full ${done ? 'bg-emerald-500' : 'bg-slate-200'}`} />{label}</li>; }
+function ActionFooter({ record, onSupplement, onConfirm }: { record: ArchiveRecord; onSupplement: () => void; onConfirm: (type: 'APPROVE' | 'COMPLETE' | 'LOCK') => void }) { return <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">{record.status === 'SUBMITTED' && <><button type="button" onClick={onSupplement} className="secondary-button">Yêu cầu bổ sung</button><button type="button" onClick={() => onConfirm('APPROVE')} className="primary-button">Phê duyệt</button></>}{record.status === 'APPROVED' && <button type="button" onClick={() => onConfirm('COMPLETE')} className="primary-button">Hoàn tất lưu trữ</button>}{record.status === 'COMPLETED' && <button type="button" onClick={() => onConfirm('LOCK')} className="inline-flex items-center rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-semibold text-white"><LockKeyhole className="mr-1.5 h-4 w-4" />Khóa hồ sơ</button>}</div>; }

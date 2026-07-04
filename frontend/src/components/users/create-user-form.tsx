@@ -27,7 +27,7 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
   const [majorTotalCredits, setMajorTotalCredits] = useState<number | null>(null);
   const form = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: { email: '', fullName: '', password: 'Password@123', phone: '', roleIds: [], studentProfile: defaultStudentProfile },
+    defaultValues: { email: '', fullName: '', password: '', phone: '', roleIds: [], studentProfile: defaultStudentProfile },
   });
 
   const selectedRoleIds = form.watch('roleIds') ?? [];
@@ -64,7 +64,7 @@ export function CreateUserForm({ roles, onSubmit }: Props) {
       ? { ...values, studentProfile: { ...defaultStudentProfile, ...values.studentProfile, facultyId: values.studentProfile?.facultyId?.trim() || undefined } }
       : { ...values, studentProfile: undefined };
     await onSubmit(payload);
-    form.reset({ email: '', fullName: '', password: 'Password@123', phone: '', roleIds: [], studentProfile: defaultStudentProfile });
+    form.reset({ email: '', fullName: '', password: '', phone: '', roleIds: [], studentProfile: defaultStudentProfile });
     setMajorTotalCredits(null);
   }
 

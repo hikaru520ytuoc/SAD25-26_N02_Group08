@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -7,6 +7,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { successResponse } from '../../common/responses/api-response';
 import { AuthUser } from '../../common/types/auth-user.type';
 import { CreateProjectPeriodDto } from './dto/create-project-period.dto';
+import { ExtendProjectPeriodDto } from './dto/extend-project-period.dto';
 import { QueryProjectPeriodDto } from './dto/query-project-period.dto';
 import { UpdateProjectPeriodDto } from './dto/update-project-period.dto';
 import { ProjectPeriodsService } from './project-periods.service';
@@ -52,6 +53,38 @@ export class ProjectPeriodsController {
   ) {
     const data = await this.projectPeriodsService.update(id, dto, actor);
     return successResponse(data, 'Cập nhật đợt đồ án thành công');
+  }
+
+  @Get(':id/students')
+  @Roles('FACULTY_MANAGER', 'ADMIN')
+  @ApiOperation({ summary: 'List students and workflow data in a project period' })
+  async findStudents(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return successResponse(await this.projectPeriodsService.findStudents(id), 'Lấy sinh viên trong đợt thành công');
+  }
+
+  @Get(':id/topics')
+  @Roles('FACULTY_MANAGER', 'ADMIN')
+  @ApiOperation({ summary: 'List topics and capacity data in a project period' })
+  async findTopics(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return successResponse(await this.projectPeriodsService.findTopics(id), 'Lấy đề tài trong đợt thành công');
+  }
+
+  @Patch(':id/extend')
+  @Roles('FACULTY_MANAGER', 'ADMIN')
+  @ApiOperation({ summary: 'Extend period or registration dates with audit trail' })
+  async extend(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: ExtendProjectPeriodDto,
+    @CurrentUser() actor: AuthUser,
+  ) {
+    return successResponse(await this.projectPeriodsService.extend(id, dto, actor), 'Gia hạn đợt đồ án thành công');
+  }
+
+  @Delete(':id')
+  @Roles('FACULTY_MANAGER', 'ADMIN')
+  @ApiOperation({ summary: 'Delete an empty draft project period' })
+  async remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @CurrentUser() actor: AuthUser) {
+    return successResponse(await this.projectPeriodsService.removeDraft(id, actor), 'Xóa bản nháp thành công');
   }
 
   @Patch(':id/open')

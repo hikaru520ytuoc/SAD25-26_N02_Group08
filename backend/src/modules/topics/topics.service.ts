@@ -291,6 +291,16 @@ export class TopicsService {
       },
       projectPeriod: true,
       approvedBy: { select: { id: true, email: true, fullName: true } },
+      topicRegistrations: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          student: { select: { studentCode: true, user: { select: { fullName: true, email: true } } } },
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+      _count: { select: { topicRegistrations: true, supervisorAssignments: true } },
     };
   }
 

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { CouncilScoreValues } from '@/schemas/sprint7.schema';
 
 export function CouncilScoreForm({ defenseScheduleId, councilMemberId, onSubmit }: { defenseScheduleId: string; councilMemberId: string; onSubmit: (values: CouncilScoreValues) => Promise<void> }) {
-  const [score, setScore] = useState('8');
+  const [score, setScore] = useState('');
   const [comment, setComment] = useState('');
   const [saving, setSaving] = useState(false);
 

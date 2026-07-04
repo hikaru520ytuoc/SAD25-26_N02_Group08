@@ -1,6 +1,6 @@
 'use client';
 
-import { Mail, Phone, Shield, UserRound } from 'lucide-react';
+import { Mail, Phone, Shield } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { StatusBadge } from '@/components/common/status-badge';
 import { LoadingState } from '@/components/common/loading-state';

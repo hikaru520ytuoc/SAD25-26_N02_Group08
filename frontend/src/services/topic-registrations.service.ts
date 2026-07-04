@@ -26,6 +26,10 @@ export function getFacultyPendingRegistrations() {
   return apiFetch<TopicRegistration[]>('/api/topic-registrations/faculty/pending');
 }
 
+export function getSupervisorRequests() {
+  return apiFetch<TopicRegistration[]>('/api/topic-registrations/supervisor/requests');
+}
+
 export function getSupervisorPendingRequests() {
   return apiFetch<TopicRegistration[]>('/api/topic-registrations/supervisor/pending');
 }

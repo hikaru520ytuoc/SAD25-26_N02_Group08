@@ -6,7 +6,7 @@ import type { DefenseRegistrationValues } from '@/schemas/sprint5.schema';
 import type { FileDocument } from '@/types/sprint4';
 
 export function DefenseRegistrationForm({ onSubmit }: { onSubmit: (payload: DefenseRegistrationValues) => Promise<void> }) {
-  const [title, setTitle] = useState('Hồ sơ bảo vệ đồ án tốt nghiệp');
+  const [title, setTitle] = useState('');
   const [summary, setSummary] = useState('');
   const [studentNote, setStudentNote] = useState('');
   const [reportFile, setReportFile] = useState<FileDocument | null>(null);
@@ -29,6 +29,12 @@ export function DefenseRegistrationForm({ onSubmit }: { onSubmit: (payload: Defe
         slideFileId: slideFile?.id,
         additionalDocumentFileId: additionalFile?.id,
       });
+      setTitle('');
+      setSummary('');
+      setStudentNote('');
+      setReportFile(null);
+      setSlideFile(null);
+      setAdditionalFile(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Không thể gửi hồ sơ');
     } finally {

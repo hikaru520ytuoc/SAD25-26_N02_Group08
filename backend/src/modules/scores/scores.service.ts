@@ -11,6 +11,7 @@ import { CreateSupervisorScoreDto } from './dto/create-supervisor-score.dto';
 import { UpdateCouncilScoreDto } from './dto/update-council-score.dto';
 import { UpdateReviewerScoreDto } from './dto/update-reviewer-score.dto';
 import { UpdateSupervisorScoreDto } from './dto/update-supervisor-score.dto';
+import { isCouncilScoreLocked } from './policies/council-score.policy';
 
 const PASSING_SCORE = 5.5;
 const DECIMAL_PLACES = 2;
@@ -126,6 +127,7 @@ export class ScoresService {
       throw new AppException('SCORE_CALCULATION_NOT_ALLOWED', 'Hồ sơ bảo vệ chưa được thư ký xác nhận hợp lệ', HttpStatus.BAD_REQUEST);
     }
     await this.recordLockService.checkProjectRecordLocked(schedule.studentId, schedule.projectPeriodId);
+    await this.ensureCouncilScoreEditable(schedule.id);
     await this.ensureResultNotPublishedByRegistration(schedule.defenseRegistrationId);
 
     const targetMember = schedule.council.members.find((member) => member.id === dto.councilMemberId);
@@ -154,6 +156,7 @@ export class ScoresService {
     const existing = await this.prisma.councilScore.findUnique({ where: { id }, include: { defenseSchedule: { include: { council: { include: { members: true } } } }, councilMember: true } });
     if (!existing) throw new AppException('COUNCIL_SCORE_NOT_FOUND', 'Không tìm thấy điểm hội đồng', HttpStatus.NOT_FOUND);
     await this.ensureRegistrationNotLocked(existing.defenseRegistrationId);
+    await this.ensureCouncilScoreEditable(existing.defenseScheduleId);
     await this.ensureResultNotPublishedByRegistration(existing.defenseRegistrationId);
     await this.ensureCouncilScoringPermission(existing.defenseSchedule, existing.councilMember, actor);
     if (typeof dto.score === 'number') this.validateScore(dto.score, 'COUNCIL_SCORE_INVALID');
@@ -217,6 +220,13 @@ export class ScoresService {
       councilAverageScore: registration?.defenseSchedule?.councilScores.length ? this.round(registration.defenseSchedule.councilScores.reduce((sum, item) => sum + item.score, 0) / registration.defenseSchedule.councilScores.length) : null,
       finalScore: null,
     };
+  }
+
+  private async ensureCouncilScoreEditable(defenseScheduleId: string) {
+    const session = await this.prisma.defenseSession.findUnique({ where: { defenseScheduleId } });
+    if (isCouncilScoreLocked(session?.sessionStatus)) {
+      throw new AppException('COUNCIL_SCORE_LOCKED', 'Điểm hội đồng đã hoàn tất và không thể chỉnh sửa', HttpStatus.CONFLICT);
+    }
   }
 
   private async ensureCouncilScoringPermission(schedule: { councilId: string; council: { members: { id: string; userId: string; lecturerId: string; roleInCouncil: CouncilRole }[] } }, targetMember: { id: string; userId: string; lecturerId: string; roleInCouncil: CouncilRole }, actor: AuthUser) {

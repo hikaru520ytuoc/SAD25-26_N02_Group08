@@ -1,3 +1,4 @@
+import type { FileDocument } from './sprint4';
 export type RevisionRequest = {
   id: string;
   title: string;
@@ -15,6 +16,8 @@ export type RevisionSubmission = {
   versionNumber: number;
   note?: string | null;
   reportFileId?: string | null;
+  reportFile?: FileDocument | null;
+  status?: 'SUBMITTED' | 'APPROVED' | 'NEEDS_CHANGES';
   submittedAt: string;
 };
 
@@ -31,4 +34,11 @@ export type ArchiveRecord = {
   sourceCodeFileId?: string | null;
   additionalDocumentFileId?: string | null;
   lockedAt?: string | null;
+  submittedAt?: string | null;
+  approvedAt?: string | null;
+  completedAt?: string | null;
+  finalReportFile?: FileDocument | null;
+  finalSlideFile?: FileDocument | null;
+  sourceCodeFile?: FileDocument | null;
+  additionalDocumentFile?: FileDocument | null;
 };

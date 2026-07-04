@@ -3,7 +3,7 @@
 import { useState } from 'react';
 
 export function ReviewerScoreForm({ onSubmit }: { onSubmit: (payload: { score: number; comment?: string }) => Promise<void> }) {
-  const [score, setScore] = useState('8');
+  const [score, setScore] = useState('');
   const [comment, setComment] = useState('');
   return (
     <div className="grid gap-3 md:grid-cols-3">

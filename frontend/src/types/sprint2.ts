@@ -16,6 +16,7 @@ export type ProjectPeriod = {
   createdAt: string;
   updatedAt: string;
   _count?: { projectPeriodRegistrations: number; topics: number };
+  statistics?: { students: number; topics: number; supervisors: number };
 };
 
 
@@ -39,4 +40,6 @@ export type Topic = {
     user: { id: string; email: string; fullName: string };
   };
   approvedBy?: { email: string; fullName: string } | null;
+  topicRegistrations?: Array<{ id: string; status: string; createdAt: string; student: { studentCode: string; user: { fullName: string; email: string } } }>;
+  _count?: { topicRegistrations: number; supervisorAssignments: number };
 };

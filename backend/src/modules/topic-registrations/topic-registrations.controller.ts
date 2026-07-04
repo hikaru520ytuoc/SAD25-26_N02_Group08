@@ -38,6 +38,14 @@ export class TopicRegistrationsController {
     return successResponse(data, 'Lấy danh sách GVHD thành công');
   }
 
+  @Get('supervisor/requests')
+  @Roles('SUPERVISOR')
+  @ApiOperation({ summary: 'List all supervision requests for current supervisor' })
+  async findSupervisorRequests(@CurrentUser() actor: AuthUser) {
+    const data = await this.topicRegistrationsService.findSupervisorRequests(actor);
+    return successResponse(data, 'Lấy danh sách yêu cầu hướng dẫn thành công');
+  }
+
   @Get('supervisor/pending')
   @Roles('SUPERVISOR')
   @ApiOperation({ summary: 'List pending supervisor requests for current supervisor' })

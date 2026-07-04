@@ -60,11 +60,14 @@ services:
       BCRYPT_SALT_ROUNDS: 10
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
+      MINIO_PUBLIC_ENDPOINT: localhost
+      MINIO_PUBLIC_PORT: 9000
+      FILE_SIGNED_URL_TTL_SECONDS: 180
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin123
       MINIO_BUCKET: graduation-project-files
       MAX_FILE_SIZE_MB: 20
-      ALLOWED_FILE_TYPES: application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/zip,application/x-zip-compressed
+      ALLOWED_FILE_TYPES: application/pdf,image/png,image/jpeg,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-powerpoint,application/zip,application/x-zip-compressed
     ports:
       - "8080:8080"
     depends_on:
@@ -87,7 +90,7 @@ services:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
       NEXT_PUBLIC_APP_NAME: Graduation Project Management
       NEXT_PUBLIC_MAX_FILE_SIZE_MB: 20
-      NEXT_PUBLIC_ALLOWED_FILE_TYPES: .pdf,.doc,.docx,.zip
+      NEXT_PUBLIC_ALLOWED_FILE_TYPES: .pdf,.png,.jpg,.jpeg,.txt,.doc,.docx,.ppt,.pptx,.zip
     ports:
       - "3000:3000"
     depends_on:

@@ -10,15 +10,6 @@ import { setAccessToken, setStoredUser } from '@/lib/auth-storage';
 import { login } from '@/services/auth.service';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth.schema';
 
-const demoAccounts = [
-  'admin@example.com / Admin@123456',
-  'student@example.com / Student@123456',
-  'supervisor@example.com / Supervisor@123456',
-  'faculty@example.com / Faculty@123456',
-  'reviewer@example.com / Reviewer@123456',
-  'secretary@example.com / Secretary@123456',
-  'archive@example.com / Archive@123456',
-];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,8 +19,8 @@ export default function LoginPage() {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@example.com',
-      password: 'Admin@123456',
+      email: '',
+      password: '',
     },
   });
 
@@ -110,12 +101,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <details className="mt-6 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-              <summary className="cursor-pointer font-semibold text-slate-800">Tài khoản demo</summary>
-              <div className="mt-3 space-y-1">
-                {demoAccounts.map((account) => <p key={account}>{account}</p>)}
-              </div>
-            </details>
+
           </div>
         </section>
       </div>

@@ -158,7 +158,7 @@ export class DefenseSchedulesService {
       student: { include: { user: true } },
       projectPeriod: true,
       council: { include: { members: { include: { lecturer: { include: { user: true } }, user: true } } } },
-      defenseDocument: true,
+      defenseDocument: { include: { reportFile: true, slideFile: true, additionalFile: true } },
     };
   }
 

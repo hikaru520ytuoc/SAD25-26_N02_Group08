@@ -1,33 +1,38 @@
 'use client';
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { DefenseScheduleTable } from '@/components/sprint6/defense-schedule-table';
+import { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, CheckCircle2, Clock3, UsersRound } from 'lucide-react';
+import { DetailDrawer } from '@/components/common/detail-drawer';
+import { EmptyState } from '@/components/common/empty-state';
+import { ErrorState } from '@/components/common/error-state';
+import { FileCard } from '@/components/common/file-card';
+import { FilterBar } from '@/components/common/filter-bar';
+import { LoadingSkeleton } from '@/components/common/loading-skeleton';
+import { PageHeader } from '@/components/common/page-header';
+import { StatusBadge } from '@/components/common/status-badge';
+import { SummaryStatCard } from '@/components/common/summary-stat-card';
+import { formatDateTime, formatShortCode } from '@/lib/formatters';
 import { getCouncilDefenseSchedules } from '@/services/defense-schedules.service';
 import type { DefenseSchedule } from '@/types/sprint6';
 
 export default function CouncilSchedulesPage() {
-  const [items, setItems] = useState<DefenseSchedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [items, setItems] = useState<DefenseSchedule[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [search, setSearch] = useState(''); const [status, setStatus] = useState('ALL'); const [view, setView] = useState<'LIST' | 'CALENDAR'>('LIST'); const [selected, setSelected] = useState<DefenseSchedule | null>(null);
+  async function load() { setLoading(true); setError(''); try { setItems(await getCouncilDefenseSchedules()); } catch (err) { setError(err instanceof Error ? err.message : 'Không thể tải lịch hội đồng'); } finally { setLoading(false); } }
+  useEffect(() => { void load(); }, []);
+  const now = new Date();
+  const stats = useMemo(() => ({ total: items.length, upcoming: items.filter((item) => new Date(item.startTime) > now && item.status !== 'CANCELLED').length, completed: items.filter((item) => item.status === 'COMPLETED').length, councils: new Set(items.map((item) => item.councilId)).size }), [items]);
+  const filtered = useMemo(() => items.filter((item) => { if (status !== 'ALL' && item.status !== status) return false; const text = `${item.student?.studentCode ?? ''} ${item.student?.user?.fullName ?? ''} ${item.defenseRegistration?.title ?? ''} ${item.council?.name ?? ''} ${item.room}`.toLowerCase(); return text.includes(search.toLowerCase().trim()); }), [items, search, status]);
+  const grouped = useMemo(() => Object.entries(filtered.reduce<Record<string, DefenseSchedule[]>>((acc, item) => { const key = new Date(item.defenseDate || item.startTime).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }); (acc[key] ??= []).push(item); return acc; }, {})), [filtered]);
+  return <div className="space-y-6"><PageHeader title="Lịch bảo vệ của hội đồng" description="Theo dõi lịch, sinh viên, phòng và hồ sơ bảo vệ thuộc các hội đồng mà bạn tham gia." />
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><SummaryStatCard label="Tổng lịch" value={stats.total} icon={CalendarDays} /><SummaryStatCard label="Sắp diễn ra" value={stats.upcoming} icon={Clock3} tone="amber" /><SummaryStatCard label="Đã hoàn tất" value={stats.completed} icon={CheckCircle2} tone="emerald" /><SummaryStatCard label="Hội đồng" value={stats.councils} icon={UsersRound} tone="blue" /></div>
+    <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 lg:flex-row lg:items-center"><div className="flex gap-2"><button type="button" onClick={() => setView('LIST')} className={view === 'LIST' ? 'tab-button-active' : 'tab-button'}>Danh sách</button><button type="button" onClick={() => setView('CALENDAR')} className={view === 'CALENDAR' ? 'tab-button-active' : 'tab-button'}>Theo ngày</button></div><div className="min-w-0 flex-1"><FilterBar search={search} onSearchChange={setSearch} placeholder="Tìm sinh viên, đề tài, hội đồng hoặc phòng..."><select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm"><option value="ALL">Tất cả trạng thái</option><option value="SCHEDULED">Đã xếp lịch</option><option value="DOCUMENT_PENDING">Chờ hồ sơ</option><option value="DOCUMENT_NEEDS_SUPPLEMENT">Cần bổ sung</option><option value="DOCUMENT_APPROVED">Hồ sơ hợp lệ</option><option value="COMPLETED">Đã hoàn tất</option><option value="CANCELLED">Đã hủy</option></select></FilterBar></div></div>
+    {error && <ErrorState message={error} onRetry={() => void load()} />}{loading ? <LoadingSkeleton rows={5} /> : filtered.length === 0 ? <EmptyState title="Chưa có lịch bảo vệ" description="Lịch sẽ xuất hiện khi Khoa phân công hội đồng và thời gian bảo vệ." /> : view === 'LIST' ? <div className="grid gap-4 lg:grid-cols-2">{filtered.map((item) => <ScheduleCard key={item.id} item={item} onView={() => setSelected(item)} />)}</div> : <div className="space-y-5">{grouped.map(([date, schedules]) => <section key={date}><h2 className="mb-3 capitalize text-base font-bold text-slate-800">{date}</h2><div className="space-y-3">{schedules.map((item) => <ScheduleCard key={item.id} item={item} onView={() => setSelected(item)} compact />)}</div></section>)}</div>}
+    <DetailDrawer open={Boolean(selected)} onClose={() => setSelected(null)} title={selected ? `${selected.student?.studentCode ?? ''} – ${selected.student?.user?.fullName ?? 'Sinh viên'}` : 'Chi tiết lịch'} description={selected?.defenseRegistration?.title}>
+      {selected && <div className="space-y-5"><section className="rounded-2xl border bg-white p-4"><div className="flex items-start justify-between gap-4"><h3 className="font-bold">Thông tin lịch bảo vệ</h3><StatusBadge value={selected.status} /></div><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><div><dt className="text-slate-500">Hội đồng</dt><dd className="font-semibold">{selected.council?.name ?? '—'}</dd></div><div><dt className="text-slate-500">Phòng</dt><dd className="font-semibold">{selected.room}</dd></div><div><dt className="text-slate-500">Bắt đầu</dt><dd className="font-semibold">{formatDateTime(selected.startTime)}</dd></div><div><dt className="text-slate-500">Kết thúc</dt><dd className="font-semibold">{formatDateTime(selected.endTime)}</dd></div><div><dt className="text-slate-500">GVHD</dt><dd className="font-semibold">{selected.defenseRegistration?.supervisor?.user?.fullName ?? '—'}</dd></div><div><dt className="text-slate-500">GVPB</dt><dd className="font-semibold">{selected.defenseRegistration?.reviewerAssignment?.reviewer?.user?.fullName ?? '—'}</dd></div></dl></section><section className="rounded-2xl border bg-white p-4"><h3 className="font-bold">Thành viên hội đồng</h3><div className="mt-3 space-y-2">{selected.council?.members?.map((member) => <div key={member.id} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm"><span className="font-medium">{member.user?.fullName ?? member.lecturer?.user?.fullName ?? 'Giảng viên'}</span><StatusBadge value={member.roleInCouncil} /></div>)}</div></section><section className="space-y-3"><h3 className="font-bold">Hồ sơ đã nộp</h3>{selected.defenseDocument?.reportFile ? <FileCard file={selected.defenseDocument.reportFile} /> : null}{selected.defenseDocument?.slideFile ? <FileCard file={selected.defenseDocument.slideFile} /> : null}{!selected.defenseDocument?.reportFile && !selected.defenseDocument?.slideFile && <p className="rounded-2xl border border-dashed bg-white p-4 text-sm text-slate-500">Chưa có file hồ sơ trong dữ liệu lịch.</p>}</section></div>}
+    </DetailDrawer>
+  </div>;
+}
 
-  useEffect(() => {
-    async function load() {
-      try { setItems(await getCouncilDefenseSchedules()); }
-      catch (err) { setError(err instanceof Error ? err.message : 'Không thể tải lịch hội đồng'); }
-      finally { setLoading(false); }
-    }
-    void load();
-  }, []);
-
-  return (
-    <>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between"><div><h1 className="text-3xl font-bold text-slate-950">Lịch bảo vệ của hội đồng</h1><p className="mt-2 text-slate-600">Thành viên hội đồng xem lịch và hồ sơ sinh viên được phân công.</p></div><Link href="/dashboard" className="rounded-xl border px-4 py-2 text-sm font-semibold">Dashboard</Link></div>
-        {loading ? <div className="rounded-3xl bg-white p-6">Đang tải...</div> : null}
-        {error ? <div className="rounded-3xl bg-red-50 p-6 text-red-700">{error}</div> : null}
-        <DefenseScheduleTable schedules={items} />
-      </div>
-    </>
-  );
+function ScheduleCard({ item, onView, compact = false }: { item: DefenseSchedule; onView: () => void; compact?: boolean }) {
+  return <article className={`rounded-3xl border border-slate-200 bg-white shadow-sm ${compact ? 'p-4' : 'p-5'}`}><div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="text-xs font-semibold uppercase text-slate-400">{formatShortCode('BV', item.id, item.defenseDate)}</p><h2 className="mt-1 truncate text-lg font-bold text-slate-950">{item.student?.studentCode} – {item.student?.user?.fullName ?? 'Sinh viên'}</h2><p className="mt-1 line-clamp-2 text-sm text-slate-600">{item.defenseRegistration?.title ?? 'Đồ án tốt nghiệp'}</p></div><StatusBadge value={item.status} /></div><div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600"><span><b className="text-slate-900">{new Date(item.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}–{new Date(item.endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</b> · {new Date(item.startTime).toLocaleDateString('vi-VN')}</span><span>{item.council?.name ?? 'Hội đồng'}</span><span>Phòng {item.room}</span></div><button type="button" onClick={onView} className="mt-4 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold hover:bg-slate-50">Xem chi tiết</button></article>;
 }

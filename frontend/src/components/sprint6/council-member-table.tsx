@@ -1,4 +1,3 @@
-import { StatusBadge } from '@/components/common/status-badge';
 import type { CouncilMember } from '@/types/sprint6';
 
 const roleLabel: Record<string, string> = {

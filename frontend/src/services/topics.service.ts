@@ -16,6 +16,10 @@ export function getTopics(status?: TopicStatus) {
   return apiFetch<Topic[]>(`/api/topics${query}`);
 }
 
+export function getTopic(id: string) {
+  return apiFetch<Topic>(`/api/topics/${id}`);
+}
+
 export function getPublishedTopics() {
   return apiFetch<Topic[]>('/api/topics/published');
 }
@@ -29,6 +33,10 @@ export function createTopic(input: TopicInput) {
     method: 'POST',
     body: JSON.stringify(input),
   });
+}
+
+export function updateTopic(id: string, input: Partial<TopicInput>) {
+  return apiFetch<Topic>(`/api/topics/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
 }
 
 export function submitTopic(id: string) {

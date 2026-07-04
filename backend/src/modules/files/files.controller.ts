@@ -7,6 +7,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { successResponse } from '../../common/responses/api-response';
 import { AuthUser } from '../../common/types/auth-user.type';
+import { FileAccessUrlDto } from './dto/file-access-url.dto';
 import { QueryFileDto } from './dto/query-file.dto';
 import { FilesService } from './files.service';
 
@@ -55,6 +56,17 @@ export class FilesController {
   async getMetadata(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string, @CurrentUser() actor: AuthUser) {
     const data = await this.filesService.getMetadata(id, actor);
     return successResponse(data, 'Lấy metadata file thành công');
+  }
+
+  @Get(':id/access-url')
+  @ApiOperation({ summary: 'Create short-lived signed URL for preview or download' })
+  async createAccessUrl(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Query() query: FileAccessUrlDto,
+    @CurrentUser() actor: AuthUser,
+  ) {
+    const data = await this.filesService.createAccessUrl(id, actor, query.mode);
+    return successResponse(data, 'Tạo liên kết truy cập file thành công');
   }
 
   @Get(':id/download')

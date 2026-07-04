@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { DataTableToolbar } from '@/components/common/data-table-toolbar';
 import { EmptyState } from '@/components/common/empty-state';
 import { StatusBadge } from '@/components/common/status-badge';
-import { confirmImportantAction } from '@/components/common/confirm-dialog';
+import { ConfirmActionModal } from '@/components/common/confirm-action-modal';
 import type { UserListItem } from '@/types/auth';
 
 type Props = {
@@ -21,6 +21,7 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
   const [actionError, setActionError] = useState('');
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ALL');
+  const [pendingAction, setPendingAction] = useState<{ user: UserListItem; type: 'lock' | 'unlock' } | null>(null);
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -157,10 +158,7 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
                             type="button"
                             disabled={loadingId === user.id || isCurrentUser}
                             title={isCurrentUser ? 'Không thể khóa tài khoản đang đăng nhập' : 'Khóa tài khoản'}
-                            onClick={() => {
-                              if (!confirmImportantAction(`Khóa tài khoản ${user.email}? Người dùng sẽ không thể đăng nhập.`)) return;
-                              void runAction(user.id, () => onLock(user.id));
-                            }}
+                            onClick={() => setPendingAction({ user, type: 'lock' })}
                             className="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             {loadingId === user.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Lock className="h-3.5 w-3.5" />}
@@ -170,10 +168,7 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
                           <button
                             type="button"
                             disabled={loadingId === user.id}
-                            onClick={() => {
-                              if (!confirmImportantAction(`Mở khóa tài khoản ${user.email}? Người dùng sẽ có thể đăng nhập lại.`)) return;
-                              void runAction(user.id, () => onUnlock(user.id));
-                            }}
+                            onClick={() => setPendingAction({ user, type: 'unlock' })}
                             className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                           >
                             {loadingId === user.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Unlock className="h-3.5 w-3.5" />}
@@ -189,6 +184,21 @@ export function UserTable({ users, currentUserId, onEdit, onLock, onUnlock }: Pr
           </table>
         </div>
       )}
+      <ConfirmActionModal
+        open={Boolean(pendingAction)}
+        onClose={() => !loadingId && setPendingAction(null)}
+        onConfirm={async () => {
+          if (!pendingAction) return;
+          const { user, type } = pendingAction;
+          await runAction(user.id, () => type === 'lock' ? onLock(user.id) : onUnlock(user.id));
+          setPendingAction(null);
+        }}
+        loading={Boolean(loadingId)}
+        tone={pendingAction?.type === 'lock' ? 'danger' : 'primary'}
+        title={pendingAction?.type === 'lock' ? 'Khóa tài khoản' : 'Mở khóa tài khoản'}
+        confirmLabel={pendingAction?.type === 'lock' ? 'Khóa tài khoản' : 'Mở khóa'}
+        description={pendingAction ? <>Bạn sắp {pendingAction.type === 'lock' ? 'khóa' : 'mở khóa'} tài khoản <strong>{pendingAction.user.email}</strong>. {pendingAction.type === 'lock' ? 'Người dùng sẽ không thể đăng nhập.' : 'Người dùng sẽ có thể đăng nhập lại.'}</> : null}
+      />
     </div>
   );
 }

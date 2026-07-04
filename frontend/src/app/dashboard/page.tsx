@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Bell, CheckCircle2, ClipboardList, GraduationCap, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
+import { ArrowRight, Bell, CheckCircle2, ClipboardList, GraduationCap, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { LoadingState } from '@/components/common/loading-state';

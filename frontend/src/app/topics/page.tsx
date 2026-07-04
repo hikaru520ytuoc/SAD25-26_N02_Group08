@@ -2,6 +2,10 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { ErrorState } from '@/components/common/error-state';
+import { LoadingSkeleton } from '@/components/common/loading-skeleton';
+import { PageHeader } from '@/components/common/page-header';
+import { SummaryStatCard } from '@/components/common/summary-stat-card';
 import { TopicTable } from '@/components/sprint2/topic-table';
 import { clearAccessToken } from '@/lib/auth-storage';
 import { getMe } from '@/services/auth.service';
@@ -16,33 +20,55 @@ export default function StudentTopicsPage() {
 
   async function load() {
     try {
+      setLoading(true);
       setError(null);
       const me = await getMe();
-      if (!me.roles.includes('STUDENT') && !me.roles.includes('ADMIN') && !me.roles.includes('FACULTY_MANAGER')) {
+      if (!me.roles.some((role) => ['STUDENT', 'ADMIN', 'FACULTY_MANAGER'].includes(role))) {
         setError('Bạn không có quyền truy cập màn hình này.');
         return;
       }
       setItems(await getPublishedTopics());
-    } catch {
-      clearAccessToken();
-      router.push('/login');
+    } catch (loadError) {
+      const message = loadError instanceof Error ? loadError.message : 'Không thể tải danh sách đề tài.';
+      if (/đăng nhập|unauthorized|401/i.test(message)) {
+        clearAccessToken();
+        router.push('/login');
+        return;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const availableCount = items.filter((topic) => {
+    const registered = topic.topicRegistrations?.filter((item) => !['CANCELLED', 'FACULTY_REJECTED'].includes(item.status)).length
+      ?? topic._count?.topicRegistrations
+      ?? 0;
+    return registered < topic.maxStudents;
+  }).length;
 
   return (
-    <>
-      <div className="space-y-6">
-        <div className="rounded-3xl bg-white p-8 shadow-sm">
-          <h1 className="text-3xl font-bold text-slate-950">Danh sách đề tài đã công bố</h1>
-          <p className="mt-2 text-slate-600">Sprint 2 chỉ cho sinh viên xem đề tài. Đăng ký đề tài sẽ triển khai ở Sprint 3.</p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Danh sách đề tài đã công bố"
+        description="Tra cứu đề tài theo đợt, chuyên ngành và sức chứa. Mỗi đề tài có màn hình chi tiết trước khi thực hiện đăng ký."
+      />
+
+      {!loading && !error && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <SummaryStatCard label="Tổng đề tài" value={items.length} hint="Đã được Khoa công bố" />
+          <SummaryStatCard label="Còn vị trí" value={availableCount} hint="Có thể tiếp nhận thêm sinh viên" />
         </div>
-        {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
-        {loading ? <div className="rounded-3xl bg-white p-8">Đang tải...</div> : <TopicTable topics={items} mode="student" />}
-      </div>
-    </>
+      )}
+
+      {loading && <LoadingSkeleton rows={6} />}
+      {!loading && error && <ErrorState message={error} onRetry={() => void load()} />}
+      {!loading && !error && <TopicTable topics={items} mode="student" />}
+    </div>
   );
 }

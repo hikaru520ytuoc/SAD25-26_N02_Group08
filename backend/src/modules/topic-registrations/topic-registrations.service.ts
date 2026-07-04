@@ -204,6 +204,15 @@ export class TopicRegistrationsService {
     return updated;
   }
 
+  async findSupervisorRequests(actor: AuthUser) {
+    const lecturer = await this.getLecturerByUserId(actor.id);
+    return this.prisma.topicRegistration.findMany({
+      where: { requestedSupervisorId: lecturer.id },
+      include: this.registrationInclude(),
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   async findSupervisorPending(actor: AuthUser) {
     const lecturer = await this.getLecturerByUserId(actor.id);
     return this.prisma.topicRegistration.findMany({
