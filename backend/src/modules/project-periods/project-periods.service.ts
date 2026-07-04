@@ -141,7 +141,11 @@ export class ProjectPeriodsService {
 
   async open(id: string, actor: AuthUser) {
     const current = await this.findOne(id);
-    if (![ProjectPeriodStatus.DRAFT, ProjectPeriodStatus.CLOSED].includes(current.status)) {
+    const reopenableStatuses: ProjectPeriodStatus[] = [
+      ProjectPeriodStatus.DRAFT,
+      ProjectPeriodStatus.CLOSED,
+    ];
+    if (!reopenableStatuses.includes(current.status)) {
       throw new AppException('PROJECT_PERIOD_INVALID_STATUS', 'Chỉ có thể mở đợt đang ở trạng thái bản nháp hoặc đã đóng', HttpStatus.CONFLICT);
     }
 

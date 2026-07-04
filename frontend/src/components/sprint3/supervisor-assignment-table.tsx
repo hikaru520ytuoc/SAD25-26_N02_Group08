@@ -20,7 +20,13 @@ export function SupervisorAssignmentTable({ items, mode = 'faculty', search = ''
   const filtered = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase('vi');
     if (!keyword) return items;
-    return items.filter((item) => [item.student.studentCode, item.student.user.fullName, item.supervisor.user.fullName, item.topic?.title, item.projectPeriod.name].some((value) => value?.toLocaleLowerCase('vi').includes(keyword)));
+    return items.filter((item) => [
+      item.student?.studentCode,
+      item.student?.user?.fullName,
+      item.supervisor?.user?.fullName,
+      item.topic?.title,
+      item.projectPeriod?.name,
+    ].some((value) => value?.toLocaleLowerCase('vi').includes(keyword)));
   }, [items, search]);
 
   if (filtered.length === 0) return <EmptyState title="Chưa có phân công GVHD" description="Không tìm thấy phân công phù hợp với bộ lọc hiện tại." />;
@@ -31,23 +37,23 @@ export function SupervisorAssignmentTable({ items, mode = 'faculty', search = ''
         {filtered.map((item) => (
           <article key={item.id} className="section-card">
             <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><h2 className="font-bold text-slate-950">{item.student.studentCode} – {item.student.user.fullName}</h2><p className="mt-1 text-sm text-slate-500">{item.topic?.title ?? item.topicRegistration?.proposedTitle ?? 'Đề tài sinh viên đề xuất'}</p></div>
+              <div><h2 className="font-bold text-slate-950">{item.student?.studentCode ?? 'Chưa có mã SV'} – {item.student?.user?.fullName ?? 'Chưa cập nhật sinh viên'}</h2><p className="mt-1 text-sm text-slate-500">{item.topic?.title ?? item.topicRegistration?.proposedTitle ?? 'Đề tài sinh viên đề xuất'}</p></div>
               <StatusBadge value={item.status} />
             </div>
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-              {mode !== 'student' && <p><span className="text-slate-500">GVHD:</span> <strong>{item.supervisor.user.fullName}</strong></p>}
-              <p><span className="text-slate-500">Đợt:</span> <strong>{item.projectPeriod.name}</strong></p>
+              {mode !== 'student' && <p><span className="text-slate-500">GVHD:</span> <strong>{item.supervisor?.user?.fullName ?? 'Chưa cập nhật'}</strong></p>}
+              <p><span className="text-slate-500">Đợt:</span> <strong>{item.projectPeriod?.name ?? 'Chưa cập nhật'}</strong></p>
               <p><span className="text-slate-500">Hình thức:</span> <strong>{assignmentTypeLabels[item.assignmentType] ?? 'Chưa xác định'}</strong></p>
-              <p><span className="text-slate-500">Phân công:</span> <strong>{new Date(item.assignedAt).toLocaleDateString('vi-VN')}</strong></p>
+              <p><span className="text-slate-500">Phân công:</span> <strong>{formatDate(item.assignedAt)}</strong></p>
             </div>
             <div className="mt-4 border-t border-slate-100 pt-4"><button type="button" onClick={() => setSelected(item)} className="secondary-button"><Eye className="mr-1.5 h-4 w-4" />Xem chi tiết</button></div>
           </article>
         ))}
       </div>
-      <DetailDrawer open={Boolean(selected)} onClose={() => setSelected(null)} title={selected ? `${selected.student.studentCode} – ${selected.student.user.fullName}` : 'Chi tiết phân công'} description="Thông tin GVHD chính thức và tiến trình liên quan.">
+      <DetailDrawer open={Boolean(selected)} onClose={() => setSelected(null)} title={selected ? `${selected.student?.studentCode ?? 'Chưa có mã SV'} – ${selected.student?.user?.fullName ?? 'Chưa cập nhật sinh viên'}` : 'Chi tiết phân công'} description="Thông tin GVHD chính thức và tiến trình liên quan.">
         {selected && <div className="space-y-5">
-          <section className="section-card"><div className="flex items-center justify-between gap-3"><h3 className="font-bold">Thông tin sinh viên</h3><StatusBadge value={selected.status} /></div><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><Info label="Mã sinh viên" value={selected.student.studentCode} /><Info label="Họ tên" value={selected.student.user.fullName} /><Info label="Lớp" value={selected.student.className} /><Info label="Ngành" value={`${selected.student.major.code} - ${selected.student.major.name}`} /><Info label="Email" value={selected.student.user.email} /></dl></section>
-          <section className="section-card"><h3 className="font-bold">Đề tài và GVHD</h3><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><Info label="Đề tài" value={selected.topic?.title ?? selected.topicRegistration?.proposedTitle ?? 'Đề tài sinh viên đề xuất'} /><Info label="GVHD" value={selected.supervisor.user.fullName} /><Info label="Mã giảng viên" value={selected.supervisor.lecturerCode} /><Info label="Hình thức" value={assignmentTypeLabels[selected.assignmentType] ?? 'Chưa xác định'} /><Info label="Đợt đồ án" value={selected.projectPeriod.name} /><Info label="Ngày phân công" value={new Date(selected.assignedAt).toLocaleDateString('vi-VN')} /></dl></section>
+          <section className="section-card"><div className="flex items-center justify-between gap-3"><h3 className="font-bold">Thông tin sinh viên</h3><StatusBadge value={selected.status} /></div><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><Info label="Mã sinh viên" value={selected.student?.studentCode} /><Info label="Họ tên" value={selected.student?.user?.fullName} /><Info label="Lớp" value={selected.student?.className} /><Info label="Ngành" value={selected.student?.major ? `${selected.student.major.code} - ${selected.student.major.name}` : 'Chưa cập nhật'} /><Info label="Email" value={selected.student?.user?.email} /></dl></section>
+          <section className="section-card"><h3 className="font-bold">Đề tài và GVHD</h3><dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2"><Info label="Đề tài" value={selected.topic?.title ?? selected.topicRegistration?.proposedTitle ?? 'Đề tài sinh viên đề xuất'} /><Info label="GVHD" value={selected.supervisor?.user?.fullName} /><Info label="Mã giảng viên" value={selected.supervisor?.lecturerCode} /><Info label="Hình thức" value={assignmentTypeLabels[selected.assignmentType] ?? 'Chưa xác định'} /><Info label="Đợt đồ án" value={selected.projectPeriod?.name} /><Info label="Ngày phân công" value={formatDate(selected.assignedAt)} /></dl></section>
           <section className="section-card"><h3 className="font-bold">Workflow hiện tại</h3><p className="mt-3 text-sm text-slate-600">Phân công đã được xác nhận. Các bước đề cương, tiến độ, bảo vệ, phản biện, kết quả và lưu trữ được hiển thị tại các module nghiệp vụ tương ứng.</p></section>
         </div>}
       </DetailDrawer>
@@ -56,3 +62,10 @@ export function SupervisorAssignmentTable({ items, mode = 'faculty', search = ''
 }
 
 function Info({ label, value }: { label: string; value?: string | null }) { return <div><dt className="text-slate-500">{label}</dt><dd className="mt-1 font-semibold text-slate-900">{value || '-'}</dd></div>; }
+
+
+function formatDate(value?: string | null) {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('vi-VN');
+}

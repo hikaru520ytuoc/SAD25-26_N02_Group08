@@ -73,8 +73,19 @@ export class SupervisorAssignmentsService {
 
   private assignmentInclude(): Prisma.SupervisorAssignmentInclude {
     return {
-      student: { include: { user: { select: { id: true, email: true, fullName: true } } } },
-      supervisor: { include: { user: { select: { id: true, email: true, fullName: true } } } },
+      student: {
+        include: {
+          user: { select: { id: true, email: true, fullName: true } },
+          major: { select: { id: true, code: true, name: true, totalCredits: true } },
+          faculty: { select: { id: true, code: true, name: true } },
+        },
+      },
+      supervisor: {
+        include: {
+          user: { select: { id: true, email: true, fullName: true } },
+          faculty: { select: { id: true, code: true, name: true } },
+        },
+      },
       topic: true,
       projectPeriod: true,
       topicRegistration: true,

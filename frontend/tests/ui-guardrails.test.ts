@@ -27,3 +27,20 @@ test('Vietnamese date field keeps the visible input as text', () => {
   assert.match(source, /type="date"/);
   assert.match(source, /opacity-0/);
 });
+
+test('supervisor assignment pages tolerate incomplete or wrapped API payloads', () => {
+  const service = read('src/services/supervisor-assignments.service.ts');
+  const page = read('src/app/faculty/supervisor-assignments/page.tsx');
+  const table = read('src/components/sprint3/supervisor-assignment-table.tsx');
+
+  assert.match(service, /normalizeAssignments/);
+  assert.match(service, /Array\.isArray\(payload\)/);
+  assert.match(page, /validItems/);
+  assert.match(table, /selected\.student\?\.major/);
+});
+
+test('application routes have a recoverable error boundary', () => {
+  const source = read('src/app/error.tsx');
+  assert.match(source, /reset/);
+  assert.match(source, /Thử tải lại/);
+});

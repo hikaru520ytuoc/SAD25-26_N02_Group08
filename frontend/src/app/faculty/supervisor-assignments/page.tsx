@@ -18,10 +18,33 @@ export default function FacultySupervisorAssignmentsPage() {
   const [search, setSearch] = useState('');
   const [periodId, setPeriodId] = useState('');
 
-  async function load() { setLoading(true); setError(null); try { setItems(await getSupervisorAssignments()); } catch (err) { setError(err instanceof Error ? err.message : 'Không tải được phân công GVHD'); } finally { setLoading(false); } }
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await getSupervisorAssignments();
+      setItems(data);
+    } catch (err) {
+      setItems([]);
+      setError(err instanceof Error ? err.message : 'Không tải được phân công GVHD');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => { void load(); }, []);
-  const periods = useMemo(() => Array.from(new Map(items.map((item) => [item.projectPeriod.id, item.projectPeriod])).values()), [items]);
-  const visible = periodId ? items.filter((item) => item.projectPeriod.id === periodId) : items;
+
+  const validItems = useMemo(
+    () => items.filter((item) => item?.id && item.student?.id && item.supervisor?.id && item.projectPeriod?.id),
+    [items],
+  );
+  const periods = useMemo(
+    () => Array.from(new Map(validItems.map((item) => [item.projectPeriod.id, item.projectPeriod])).values()),
+    [validItems],
+  );
+  const visible = periodId
+    ? validItems.filter((item) => item.projectPeriod.id === periodId)
+    : validItems;
   const supervisors = new Set(visible.map((item) => item.supervisor.id)).size;
 
   return <div className="space-y-6">
