@@ -1,0 +1,11 @@
+{
+  "program": "thesis_grade_parser",
+  "max_records": 100,
+  "student_id_bytes": 16,
+  "student_name_bytes": 64,
+  "project_id_bytes": 16,
+  "max_line_bytes": 512,
+  "score_min": 0,
+  "score_max": 10,
+  "csv_header": "student_id,student_name,project_id,supervisor_score,reviewer_score,council_score"
+}

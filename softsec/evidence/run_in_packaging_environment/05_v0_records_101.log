@@ -1,0 +1,54 @@
+src/thesis_grade_parser_v0.c:87:5: runtime error: index 100 out of bounds for type 'GradeRecord[100]'
+    #0 0x55c74929168f  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x11868f)
+    #1 0x55c74929087c  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x11787c)
+    #2 0x55c749290204  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117204)
+    #3 0x7ff3f046eca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #4 0x7ff3f046ed64  (/lib/x86_64-linux-gnu/libc.so.6+0x29d64) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #5 0x55c7491cd3d0  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x543d0)
+
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior src/thesis_grade_parser_v0.c:87:5 
+=================================================================
+==1768==ERROR: AddressSanitizer: global-buffer-overflow on address 0x55c749c3a4b0 at pc 0x55c7492519ab bp 0x7ffee3dbf170 sp 0x7ffee3dbe930
+WRITE of size 108 at 0x55c749c3a4b0 thread T0
+    #0 0x55c7492519aa  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0xd89aa)
+    #1 0x55c749291738  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x118738)
+    #2 0x55c74929087c  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x11787c)
+    #3 0x55c749290204  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117204)
+    #4 0x7ff3f046eca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #5 0x7ff3f046ed64  (/lib/x86_64-linux-gnu/libc.so.6+0x29d64) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #6 0x55c7491cd3d0  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x543d0)
+
+0x55c749c3a4b0 is located 0 bytes after global variable 'records' defined in 'src/thesis_grade_parser_v0.c' (0x55c749c37a80) of size 10800
+SUMMARY: AddressSanitizer: global-buffer-overflow (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0xd89aa) 
+Shadow bytes around the buggy address:
+  0x55c749c3a200: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x55c749c3a280: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x55c749c3a300: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x55c749c3a380: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x55c749c3a400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x55c749c3a480: 00 00 00 00 00 00[f9]f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x55c749c3a500: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x55c749c3a580: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x55c749c3a600: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x55c749c3a680: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+  0x55c749c3a700: f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9 f9
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==1768==ABORTING

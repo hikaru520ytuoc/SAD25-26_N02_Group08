@@ -1,0 +1,53 @@
+=================================================================
+==1767==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x50b0000000ac at pc 0x5605733c6e4f bp 0x7ffe295bc890 sp 0x7ffe295bc048
+WRITE of size 121 at 0x50b0000000ac thread T0
+    #0 0x5605733c6e4e  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0xc4e4e)
+    #1 0x56057341ac9c  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x118c9c)
+    #2 0x56057341a05a  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x11805a)
+    #3 0x560573419792  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117792)
+    #4 0x560573419204  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117204)
+    #5 0x7fe24adf6ca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #6 0x7fe24adf6d64  (/lib/x86_64-linux-gnu/libc.so.6+0x29d64) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+    #7 0x5605733563d0  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x543d0)
+
+0x50b0000000ac is located 0 bytes after 108-byte region [0x50b000000040,0x50b0000000ac)
+allocated by thread T0 here:
+    #0 0x5605733dc0df  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0xda0df)
+    #1 0x560573419e2c  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117e2c)
+    #2 0x560573419792  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117792)
+    #3 0x560573419204  (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0x117204)
+    #4 0x7fe24adf6ca7  (/lib/x86_64-linux-gnu/libc.so.6+0x29ca7) (BuildId: c495b62edadd6c356265942ec1282d98058a7b41)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow (/mnt/data/_softsec_build/output/softsec/build/parser_v0+0xc4e4e) 
+Shadow bytes around the buggy address:
+  0x50affffffe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x50affffffe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x50afffffff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x50afffffff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x50b000000000: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+=>0x50b000000080: 00 00 00 00 00[04]fa fa fa fa fa fa fa fa fa fa
+  0x50b000000100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x50b000000180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x50b000000200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x50b000000280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x50b000000300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==1767==ABORTING

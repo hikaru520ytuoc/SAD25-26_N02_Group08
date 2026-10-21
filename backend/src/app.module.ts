@@ -28,6 +28,7 @@ import { ArchivesModule } from './modules/archives/archives.module';
 import { RecordLockModule } from './modules/record-lock/record-lock.module';
 import { LookupsModule } from './modules/lookups/lookups.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SoftsecImportModule } from './modules/softsec-import/softsec-import.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { PrismaModule } from './prisma/prisma.module';
     DefenseRegistrationsModule,
     ReviewersModule,
     ScoresModule,
+    SoftsecImportModule,
     CouncilsModule,
     DefenseSchedulesModule,
     DefenseDocumentsModule,

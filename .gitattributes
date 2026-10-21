@@ -1,0 +1,3 @@
+# Preserve raw test logs without whitespace normalization
+softsec/evidence/run_in_packaging_environment/*.log -whitespace
+softsec/evidence/run_in_packaging_environment/whole_pipeline.stdout.txt -whitespace

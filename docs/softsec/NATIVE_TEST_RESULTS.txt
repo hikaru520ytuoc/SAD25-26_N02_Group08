@@ -1,0 +1,11 @@
+valid                  expected=0 got=0 status=PASS output={"ok":true,"count":1,"records":[{"student_id":"SV01","student_name":"Nguyen Van A","projec
+utf8_name              expected=0 got=0 status=PASS output={"ok":true,"count":1,"records":[{"student_id":"SV01","student_name":"Nguyễn Văn A","projec
+quoted                 expected=2 got=2 status=PASS output={"ok":false,"row":2,"field":"csv","error":"Expected exactly 6 unquoted fields"}
+null_byte              expected=2 got=2 status=PASS output={"ok":false,"row":1,"field":"csv","error":"NUL byte forbidden"}
+dup_student            expected=2 got=2 status=PASS output={"ok":false,"row":3,"field":"student_id","error":"Duplicate student_id in upload"}
+header_bad             expected=2 got=2 status=PASS output={"ok":false,"row":1,"field":"header","error":"CSV header does not match exact six fields"}
+negative               expected=2 got=2 status=PASS output={"ok":false,"row":2,"field":"supervisor_score","error":"Score must be finite in [0,10]"}
+invalid_numeric        expected=2 got=2 status=PASS output={"ok":false,"row":2,"field":"supervisor_score","error":"Score must be finite in [0,10]"}
+infinite               expected=2 got=2 status=PASS output={"ok":false,"row":2,"field":"supervisor_score","error":"Score must be finite in [0,10]"}
+101_records            expected=2 got=2 status=PASS output={"ok":false,"row":102,"field":"csv","error":"More than 100 records"}
+large_line             expected=2 got=2 status=PASS output={"ok":false,"row":2,"field":"csv","error":"Line exceeds 511 bytes"}

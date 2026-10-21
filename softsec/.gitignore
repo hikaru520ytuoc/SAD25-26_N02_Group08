@@ -1,0 +1,15 @@
+# Generated binaries and coverage artifacts (never push binaries from vulnerable builds)
+/build/
+*.gcda
+*.gcno
+*.gcov
+__pycache__/
+*.pyc
+.pytest_cache/
+# Regenerate local runtime logs, retain reference logs under evidence/
+/results/*.log
+# User local files
+.env
+.env.*
+!.env.example
+.DS_Store

@@ -1,0 +1,3 @@
+student_id,student_name,project_id,supervisor_score,reviewer_score,council_score
+SV001,Nguyen Van A,DA001,8.5,8.0,9.0
+SV002,Tran Thi B,DA002,0,10,5

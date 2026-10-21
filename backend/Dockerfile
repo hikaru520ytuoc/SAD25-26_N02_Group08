@@ -1,7 +1,7 @@
 FROM node:20-alpine AS builder
 
 # Prisma on Alpine needs OpenSSL libraries for the query engine.
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl build-base
 
 WORKDIR /app
 
@@ -19,6 +19,8 @@ RUN ./node_modules/.bin/prisma generate
 
 COPY nest-cli.json tsconfig*.json ./
 COPY src ./src
+COPY softsec-native ./softsec-native
+RUN mkdir -p softsec-bin && cc -std=c11 -Wall -Wextra -Wpedantic -Werror -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong softsec-native/grade_parser.c -o softsec-bin/grade_parser
 RUN npm run build
 
 FROM node:20-alpine AS runner
@@ -32,6 +34,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/softsec-bin ./softsec-bin
 COPY --from=builder /app/prisma ./prisma
 
 EXPOSE 8080
