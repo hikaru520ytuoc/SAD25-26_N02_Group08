@@ -1,0 +1,5 @@
+BLACK BOX: seed= 20261011 tests= 300 seconds= 1.979 {'accepted': 137, 'rejected': 163, 'unexpected_exit': 0, 'timeouts': 0}
+WHITE BOX: derived predicate if(record_count>=100) reject, solver witness idx=100 => 101 CSV rows
+records_99.csv exit 0 expected 0 seconds 0.00714 output ACCEPT: 99 records
+records_100.csv exit 0 expected 0 seconds 0.00714 output ACCEPT: 100 records
+records_101.csv exit 2 expected 2 seconds 0.00729 output REJECT: >100 records

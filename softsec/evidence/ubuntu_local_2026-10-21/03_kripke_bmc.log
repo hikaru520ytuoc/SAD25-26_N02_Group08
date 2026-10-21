@@ -1,0 +1,14 @@
+v0 states 8 reachable 8 EF_success True
+  BMC bound k=2: NO violation within bound
+  BMC bound k=3: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=4: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=6: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=10: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  terminal_states_without_outgoing_edges= []
+v1 states 7 reachable 7 EF_success True
+  BMC bound k=2: NO violation within bound
+  BMC bound k=3: NO violation within bound
+  BMC bound k=4: NO violation within bound
+  BMC bound k=6: NO violation within bound
+  BMC bound k=10: NO violation within bound
+  terminal_states_without_outgoing_edges= []
