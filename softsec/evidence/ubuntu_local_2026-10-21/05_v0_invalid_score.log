@@ -1,0 +1,15 @@
+REJECT: invalid record at row 2
+
+=================================================================
+==906704==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 108 byte(s) in 1 object(s) allocated from:
+    #0 0x61c9837ba948  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0xd3948) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #1 0x61c9837ffddc  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118ddc) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #2 0x61c9837ff792  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118792) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #3 0x61c9837ff205  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118205) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #4 0x7a9324e2a600  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a600) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #5 0x7a9324e2a717  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a717) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #6 0x61c9837153a4  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x2e3a4) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+
+SUMMARY: AddressSanitizer: 108 byte(s) leaked in 1 allocation(s).

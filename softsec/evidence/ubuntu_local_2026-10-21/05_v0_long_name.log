@@ -1,0 +1,55 @@
+=================================================================
+==906702==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x715b14be00ac at pc 0x633bc80c2e3e bp 0x7ffe439d58d0 sp 0x7ffe439d5088
+WRITE of size 121 at 0x715b14be00ac thread T0
+    #0 0x633bc80c2e3d  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0xb9e3d) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #1 0x633bc8122b8c  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x119b8c) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #2 0x633bc8121fbc  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118fbc) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #3 0x633bc8121792  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118792) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #4 0x633bc8121205  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118205) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #5 0x74ab15a2a600  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a600) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #6 0x74ab15a2a717  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a717) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #7 0x633bc80373a4  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x2e3a4) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+
+0x715b14be00ac is located 0 bytes after 108-byte region [0x715b14be0040,0x715b14be00ac)
+allocated by thread T0 here:
+    #0 0x633bc80dc948  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0xd3948) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #1 0x633bc8121ddc  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118ddc) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #2 0x633bc8121792  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118792) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #3 0x633bc8121205  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x118205) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+    #4 0x74ab15a2a600  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a600) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #5 0x74ab15a2a717  (/usr/lib/x86_64-linux-gnu/libc.so.6+0x2a717) (BuildId: 066527e430a32768d82741e00b81eebb1a872294)
+    #6 0x633bc80373a4  (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0x2e3a4) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow (/home/hikaru520/Dev/projects/SAD25-26_N02_Group08/softsec/build/parser_v0+0xb9e3d) (BuildId: 8ca889f140a0e34329b99a13921ac3acf4cacb75) 
+Shadow bytes around the buggy address:
+  0x715b14bdfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x715b14bdfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x715b14bdff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x715b14bdff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x715b14be0000: fa fa fa fa fa fa fa fa 00 00 00 00 00 00 00 00
+=>0x715b14be0080: 00 00 00 00 00[04]fa fa fa fa fa fa fa fa fa fa
+  0x715b14be0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x715b14be0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x715b14be0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x715b14be0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x715b14be0300: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==906702==ABORTING
