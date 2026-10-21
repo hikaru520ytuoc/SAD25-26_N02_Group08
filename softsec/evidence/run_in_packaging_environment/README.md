@@ -1,0 +1,1 @@
+Output genuinely produced by running scripts/run_pipeline.sh while assembling this ZIP in the assistant's Linux sandbox on 2026-10-21; this is NOT a screenshot from the user's Ubuntu computer and is NOT a guarantee the same tool versions/metrics will occur on user's machine. Reproduce locally and capture your own terminal screenshots before submitting to lecturer.

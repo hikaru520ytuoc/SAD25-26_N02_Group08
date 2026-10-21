@@ -1,0 +1,82 @@
+Generated parser_config.h from spec.json
+v0: 146 source lines
+v1: 153 source lines
+Generated 16 cases
+v0 states 8 reachable 8 EF_success True
+  BMC bound k=2: NO violation within bound
+  BMC bound k=3: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=4: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=6: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  BMC bound k=10: COUNTEREXAMPLE init -> read_header -> parsing -> unsafe_store
+  terminal_states_without_outgoing_edges= []
+v1 states 7 reachable 7 EF_success True
+  BMC bound k=2: NO violation within bound
+  BMC bound k=3: NO violation within bound
+  BMC bound k=4: NO violation within bound
+  BMC bound k=6: NO violation within bound
+  BMC bound k=10: NO violation within bound
+  terminal_states_without_outgoing_edges= []
+== Quet src/thesis_grade_parser_v0.c ==
+src/thesis_grade_parser_v0.c:58: canh bao [strcpy] Khong kiem tra do dai dich - nen dung strncpy/snprintf
+    strcpy(dst, src); /* CWE-120: deliberately unsafe for isolated demonstration */
+
+== Quet src/thesis_grade_parser_v1.c ==
+Khong phat hien vi pham nao.
+
+v0 can write record at index=100 : sat 
+ (   (define-fun idx () Int     100) )
+v1 valid bound vs out of bounds : unsat 
+ 
+v0 uint32 allocation multiply overflow possibility : sat 
+ (   (define-fun n () Int     39837976) )
+v1 count guard excludes unsigned32 overflow : unsat 
+ 
+Z3 witness idx: 100 => test CSV rows: 101
+Concrete replay v1: 2 REJECT: >100 records
+BLACK BOX: seed= 20261011 tests= 300 seconds= 1.971 {'accepted': 137, 'rejected': 163, 'unexpected_exit': 0, 'timeouts': 0}
+WHITE BOX: derived predicate if(record_count>=100) reject, solver witness idx=100 => 101 CSV rows
+records_99.csv exit 0 expected 0 seconds 0.00749 output ACCEPT: 99 records
+records_100.csv exit 0 expected 0 seconds 0.00724 output ACCEPT: 100 records
+records_101.csv exit 2 expected 2 seconds 0.00669 output REJECT: >100 records
+File 'src/thesis_grade_parser_v1.c'
+Lines executed:93.41% of 91
+Branches executed:97.44% of 78
+Taken at least once:73.08% of 78
+Calls executed:80.56% of 36
+Creating 'thesis_grade_parser_v1.c.gcov'
+
+Lines executed:93.41% of 91
+valid.csv                 expected=0 actual=0 PASS
+records_99.csv            expected=0 actual=0 PASS
+records_100.csv           expected=0 actual=0 PASS
+records_101.csv           expected=2 actual=2 PASS
+invalid_score.csv         expected=2 actual=2 PASS
+invalid_inf.csv           expected=2 actual=2 PASS
+score_negative.csv        expected=2 actual=2 PASS
+score_above.csv           expected=2 actual=2 PASS
+long_name.csv             expected=2 actual=2 PASS
+wrong_header.csv          expected=2 actual=2 PASS
+missing_field.csv         expected=2 actual=2 PASS
+empty.csv                 expected=2 actual=2 PASS
+id_16.csv                 expected=2 actual=2 PASS
+name_63.csv               expected=0 actual=0 PASS
+name_64.csv               expected=2 actual=2 PASS
+quoted_csv.csv            expected=2 actual=2 PASS
+--estimate 0            expected=0 actual=0 PASS
+--estimate 100          expected=0 actual=0 PASS
+--estimate 4294967295   expected=2 actual=2 PASS
+--estimate not_number   expected=2 actual=2 PASS
+v0 long_name          heap-buffer-overflow FOUND
+v0 records_101        global-buffer-overflow FOUND
+v0 invalid_score      LeakSanitizer FOUND
+v1 long_name          sanitizer finding NONE in this reproduction
+v1 records_101        sanitizer finding NONE in this reproduction
+v1 invalid_score      sanitizer finding NONE in this reproduction
+REGRESSION SUMMARY: 20 v1 functional checks + 6 v0/v1 sanitizer assertions PASS
+max_records             JSON=100 C=100 OK
+student_id_bytes        JSON=16 C=16 OK
+student_name_bytes      JSON=64 C=64 OK
+project_id_bytes        JSON=16 C=16 OK
+max_line_bytes          JSON=512 C=512 OK
+CSV_HEADER consistent OK
+DONE - see results/*.log. Do not report crash percentages as formal proof.

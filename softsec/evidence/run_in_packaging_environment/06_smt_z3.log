@@ -1,0 +1,10 @@
+v0 can write record at index=100 : sat 
+ (   (define-fun idx () Int     100) )
+v1 valid bound vs out of bounds : unsat 
+ 
+v0 uint32 allocation multiply overflow possibility : sat 
+ (   (define-fun n () Int     39837976) )
+v1 count guard excludes unsigned32 overflow : unsat 
+ 
+Z3 witness idx: 100 => test CSV rows: 101
+Concrete replay v1: 2 REJECT: >100 records

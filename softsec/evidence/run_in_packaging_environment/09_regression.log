@@ -1,0 +1,27 @@
+valid.csv                 expected=0 actual=0 PASS
+records_99.csv            expected=0 actual=0 PASS
+records_100.csv           expected=0 actual=0 PASS
+records_101.csv           expected=2 actual=2 PASS
+invalid_score.csv         expected=2 actual=2 PASS
+invalid_inf.csv           expected=2 actual=2 PASS
+score_negative.csv        expected=2 actual=2 PASS
+score_above.csv           expected=2 actual=2 PASS
+long_name.csv             expected=2 actual=2 PASS
+wrong_header.csv          expected=2 actual=2 PASS
+missing_field.csv         expected=2 actual=2 PASS
+empty.csv                 expected=2 actual=2 PASS
+id_16.csv                 expected=2 actual=2 PASS
+name_63.csv               expected=0 actual=0 PASS
+name_64.csv               expected=2 actual=2 PASS
+quoted_csv.csv            expected=2 actual=2 PASS
+--estimate 0            expected=0 actual=0 PASS
+--estimate 100          expected=0 actual=0 PASS
+--estimate 4294967295   expected=2 actual=2 PASS
+--estimate not_number   expected=2 actual=2 PASS
+v0 long_name          heap-buffer-overflow FOUND
+v0 records_101        global-buffer-overflow FOUND
+v0 invalid_score      LeakSanitizer FOUND
+v1 long_name          sanitizer finding NONE in this reproduction
+v1 records_101        sanitizer finding NONE in this reproduction
+v1 invalid_score      sanitizer finding NONE in this reproduction
+REGRESSION SUMMARY: 20 v1 functional checks + 6 v0/v1 sanitizer assertions PASS

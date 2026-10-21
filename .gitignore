@@ -1,0 +1,26 @@
+
+# Local environment secrets
+.env
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+**/node_modules/
+
+# Build artifacts
+backend/dist/
+frontend/.next/
+frontend/tsconfig.tsbuildinfo
+backend/softsec-bin/grade_parser
+
+# Python
+**/__pycache__/
+*.pyc
+
+# Native build outputs
+softsec/build/
+softsec/results/*.log
+softsec/results/*.txt

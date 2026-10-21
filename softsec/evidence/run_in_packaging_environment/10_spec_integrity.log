@@ -1,0 +1,6 @@
+max_records             JSON=100 C=100 OK
+student_id_bytes        JSON=16 C=16 OK
+student_name_bytes      JSON=64 C=64 OK
+project_id_bytes        JSON=16 C=16 OK
+max_line_bytes          JSON=512 C=512 OK
+CSV_HEADER consistent OK

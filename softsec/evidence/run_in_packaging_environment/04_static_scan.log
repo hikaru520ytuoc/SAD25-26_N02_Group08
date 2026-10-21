@@ -1,0 +1,7 @@
+== Quet src/thesis_grade_parser_v0.c ==
+src/thesis_grade_parser_v0.c:58: canh bao [strcpy] Khong kiem tra do dai dich - nen dung strncpy/snprintf
+    strcpy(dst, src); /* CWE-120: deliberately unsafe for isolated demonstration */
+
+== Quet src/thesis_grade_parser_v1.c ==
+Khong phat hien vi pham nao.
+
